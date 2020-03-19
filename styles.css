@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+
+@font-face {
+  font-family: 'Open Sans', sans-serif;
+}
+
+div {
+  font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .header {
+  font-family: 'Open Sans', sans-serif;
+}
+
+a {
+  color: #db3a00;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #db3a00;
+  text-decoration: underline;
+}
+
+.navbar-logo {
+     max-width:60px;
+     max-height:60px;
+}

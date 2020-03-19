@@ -1,0 +1,152 @@
+---
+title: "COVID-19 monitor"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: lumen
+    orientation: rows
+    logo: logo.png
+    css: styles.css
+runtime: shiny
+---
+
+<strong>Confirmed UK cases of COVID-19 as of 09:00 (GMT) on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong><br/>Please note that the number of confirmed cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested.
+
+```{r setup, include=FALSE}
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(lubridate) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales)
+
+# Data published by Public Health England 
+# https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases
+
+# daily indicators
+url <- "https://www.arcgis.com/sharing/rest/content/items/bc8ee90225644ef7a6f4dd1b13ea1d67/data"
+GET(url, write_disk(tmp <- tempfile(fileext = ".xlsx")))
+daily_indicators <- read_xlsx(tmp) %>% 
+  mutate(DateVal = as_date(DateVal))
+
+# cases by country
+cases_by_country <- tibble(
+  area_code = c("N92000002", "S92000003", "W92000004"),
+  TotalCases = c(daily_indicators$NICases, daily_indicators$ScotlandCases, daily_indicators$WalesCases)
+)
+
+# number of daily confirmed cases
+url <- "https://www.arcgis.com/sharing/rest/content/items/e5fd11150d274bebaaf8fe2a7a2bda11/data"
+GET(url, write_disk(tmp <- tempfile(fileext = ".xlsx")))
+daily_cases <- read_xlsx(tmp) %>% 
+  mutate(DateVal = as_date(DateVal))
+
+# UTLA cases table
+utla_cases <- read_csv("https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data") %>% 
+  select(area_code = GSS_CD, TotalCases) %>% 
+  bind_rows(cases_by_country)
+
+cases_by_area <- st_read("data/areas.geojson") %>% 
+  left_join(utla_cases, by = "area_code") %>% 
+  mutate(popup = str_c("<strong>", area_name, "</strong><br/>",
+                       TotalCases, " cases") %>%
+           map(HTML))
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Total confirmed UK cases
+```{r}
+valueBox(comma(max(daily_cases$CumCases)))
+```
+
+### New confirmed UK cases on `r format(daily_indicators$DateVal, '%d %B %Y')`
+```{r}
+valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount)))
+```
+
+### UK deaths
+```{r}
+valueBox(comma(daily_indicators$TotalUKDeaths))
+```
+
+Row
+-------------------------------------
+
+### Cumulative confirmed cases
+```{r}
+renderPlot({
+  ggplot(daily_cases, aes(x = DateVal, y = CumCases)) +
+  geom_line(colour = "#57AACB", size = 1) +
+  geom_point(colour = "#57AACB", size = 2) +
+  scale_y_continuous(labels = comma, expand = c(0.005, 0.005), sec.axis = sec_axis(~ ., breaks = max(daily_cases$CumCases), labels = comma)) +
+  scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
+  geom_hline(yintercept = 0, size = 0.5, colour = "#212121") +
+  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+       caption = "Source: Public Health England") +
+  theme_minimal() +
+  theme(plot.margin = unit(rep(0.5, 4), "cm"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
+    expand_limits(y = c(0,max(daily_cases$CumCases)*1.01))
+})
+```
+
+### Daily confirmed cases
+```{r}
+renderPlot({
+  ggplot(daily_cases, aes(x = DateVal, y = CMODateCount)) +
+  geom_col(fill = "#57AACB") +
+  geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+  scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
+  scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
+  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+       caption = "Source: Public Health England") +
+  theme_minimal() +
+  theme(plot.margin = unit(rep(0.5, 4), "cm"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
+})
+```
+
+Row
+-------------------------------------
+
+### Confirmed cases by country and upper tier local authority (UTLA) in England
+```{r}
+leaflet() %>%
+  setView(-3, 54.3, zoom = 5) %>% 
+  addTiles(urlTemplate = "",
+           attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
+  addPolygons(data = cases_by_area, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd") %>% 
+  addCircleMarkers(data = cases_by_area, lng = ~long, lat = ~lat, radius = ~sqrt(TotalCases), 
+                   fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1,
+                   label = ~popup) %>% 
+  addFullscreenControl() %>% 
+  addResetMapButton() %>% 
+  onRender(
+    "function(el, t) {var myMap = this;myMap._container.style['background'] = '#ffffff';}",
+    paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
+```
+
+### 
+```{r}
+renderDT({
+  cases_by_area %>% 
+    st_set_geometry(NULL) %>% 
+    select(area_name, TotalCases) %>% 
+    arrange(area_name) %>% 
+    datatable(extensions = 'Scroller',
+              style = 'bootstrap', 
+              class = 'table-bordered',
+              fillContainer = TRUE,
+              width = "100%",
+              rownames = FALSE,
+              escape = FALSE,
+              options = list(
+                dom = 't',
+                ordering = F,
+                scrollX = TRUE,
+                scrollY = 200,
+                scroller = TRUE,
+                columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+              colnames = c("Country / UTLA", "Confirmed cases"))
+  })
+```
