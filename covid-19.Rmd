@@ -9,7 +9,7 @@ output:
 runtime: shiny
 ---
 
-<strong>Confirmed UK cases of COVID-19 as of 09:00 (GMT) on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong><br/>Please note that the number of confirmed cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested.
+<strong>Confirmed UK cases of COVID-19 as of 09:00 (GMT) on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong><br/>Please note that the number of confirmed cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested.<br/>Further information about coronavirus can be found at: <a href="https://www.trafford.gov.uk/covid-19" target="_blank">trafford.gov.uk/covid-19</a>
 
 ```{r setup, include=FALSE}
 library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(lubridate) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales)
