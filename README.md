@@ -1,5 +1,5 @@
-# covid-19
-Dashboard visualising Public Health England coronavirus data
+# COVID-19
+Dashboard visualising Public Health England coronavirus (COVID-19) data.
 
 <img src="screenshot.png" width="50%"> 
 
