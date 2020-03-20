@@ -9,10 +9,10 @@ output:
 runtime: shiny
 ---
 
-<strong>Confirmed UK cases of COVID-19 as of 09:00 (GMT) on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong><br/>Please note that the number of confirmed cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.trafford.gov.uk/covid-19" target="_blank">trafford.gov.uk/covid-19</a>
+<strong>Confirmed UK cases of COVID-19 as of `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong><br/>Please note that the number of confirmed cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.trafford.gov.uk/covid-19" target="_blank">trafford.gov.uk/covid-19</a>
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(lubridate) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales)
 
 # Data published by Public Health England 
 # https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases
@@ -21,7 +21,7 @@ library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(lubridate
 url <- "https://www.arcgis.com/sharing/rest/content/items/bc8ee90225644ef7a6f4dd1b13ea1d67/data"
 GET(url, write_disk(tmp <- tempfile(fileext = ".xlsx")))
 daily_indicators <- read_xlsx(tmp) %>% 
-  mutate(DateVal = as_date(DateVal))
+  mutate(DateVal = as.Date(DateVal, format = "%d/%m/%y"))
 
 # cases by country
 cases_by_country <- tibble(
@@ -33,7 +33,7 @@ cases_by_country <- tibble(
 url <- "https://www.arcgis.com/sharing/rest/content/items/e5fd11150d274bebaaf8fe2a7a2bda11/data"
 GET(url, write_disk(tmp <- tempfile(fileext = ".xlsx")))
 daily_cases <- read_xlsx(tmp) %>% 
-  mutate(DateVal = as_date(DateVal))
+  mutate(DateVal = as.Date(DateVal, format = "%d/%m/%y"))
 
 # UTLA cases table
 utla_cases <- read_csv("https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data") %>% 
@@ -60,7 +60,7 @@ valueBox(comma(max(daily_cases$CumCases)))
 valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount)))
 ```
 
-### UK deaths
+### Total UK deaths
 ```{r}
 valueBox(comma(daily_indicators$TotalUKDeaths))
 ```
@@ -79,7 +79,7 @@ renderPlot({
   geom_hline(yintercept = 0, size = 0.5, colour = "#212121") +
   labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
        caption = "Source: Public Health England") +
-  theme_minimal() +
+  theme_minimal(base_size = 16) +
   theme(plot.margin = unit(rep(0.5, 4), "cm"),
         panel.grid.major.x = element_blank(),
         panel.grid.minor = element_blank(),
@@ -98,7 +98,7 @@ renderPlot({
   scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
   labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
        caption = "Source: Public Health England") +
-  theme_minimal() +
+  theme_minimal(base_size = 16) +
   theme(plot.margin = unit(rep(0.5, 4), "cm"),
         panel.grid.major.x = element_blank(),
         panel.grid.minor = element_blank(),
@@ -109,7 +109,7 @@ renderPlot({
 Row
 -------------------------------------
 
-### Confirmed cases by country and upper tier local authority (UTLA) in England
+### Confirmed cases by country / UTLA
 ```{r}
 leaflet() %>%
   setView(-3, 54.3, zoom = 5) %>% 
@@ -126,14 +126,15 @@ leaflet() %>%
     paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
 ```
 
-### 
+###
 ```{r}
 renderDT({
   cases_by_area %>% 
     st_set_geometry(NULL) %>% 
     select(area_name, TotalCases) %>% 
     arrange(area_name) %>% 
-    datatable(extensions = 'Scroller',
+    datatable(caption = "Confirmed cases by country / UTLA",
+              extensions = 'Scroller',
               style = 'bootstrap', 
               class = 'table-bordered',
               fillContainer = TRUE,
@@ -142,11 +143,11 @@ renderDT({
               escape = FALSE,
               options = list(
                 dom = 't',
-                ordering = F,
+                #ordering = F,
                 scrollX = TRUE,
                 scrollY = 200,
                 scroller = TRUE,
                 columnDefs = list(list(className = 'dt-left', targets = "_all"))),
-              colnames = c("Country / UTLA", "Confirmed cases"))
+              colnames = c("Country / UTLA", "Cases"))
   })
 ```
