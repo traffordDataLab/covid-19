@@ -1,6 +1,8 @@
 # covid-19
 Dashboard visualising Public Health England coronavirus data
 
+<img src="screenshot.png" width="50%"> 
+
 ---
 
 #### Data sources
