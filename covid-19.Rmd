@@ -42,9 +42,9 @@ utla_cases <- read_csv("https://www.arcgis.com/sharing/rest/content/items/b68431
 
 cases_by_area <- st_read("data/areas.geojson") %>% 
   left_join(utla_cases, by = "area_code") %>%
-  mutate(rate = round((TotalCases/population)*1000, 3),
+  mutate(rate = round((TotalCases/population)*100000, 1),
          cases_popup = str_c("<strong>", area_name, "</strong><br/>", TotalCases, " cases") %>% map(HTML),
-         rate_popup = str_c("<strong>", area_name, "</strong><br/>", rate, " cases per 1,000 population") %>% map(HTML)) %>% 
+         rate_popup = str_c("<strong>", area_name, "</strong><br/>", rate, " cases per 100,000 population") %>% map(HTML)) %>% 
   select(-geometry, everything())
 ```
 
@@ -140,7 +140,7 @@ renderLeaflet({
     # areas without confirmed cases
     addPolygons(data = filter(cases_by_area, rate == 0), fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd", label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
     addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 1, color = "#bdbdbd", opacity = 1, label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
-    addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Cases per 1,000 population", position = "bottomright") %>% 
+    addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Cases per 100,000 population", position = "bottomright") %>% 
     addFullscreenControl() %>% 
     addResetMapButton() %>% 
     onRender(
