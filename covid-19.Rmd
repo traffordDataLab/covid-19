@@ -42,9 +42,10 @@ utla_cases <- read_csv("https://www.arcgis.com/sharing/rest/content/items/b68431
 
 cases_by_area <- st_read("data/areas.geojson") %>% 
   left_join(utla_cases, by = "area_code") %>%
-  mutate(rate = round((TotalCases/population)*1000,2),
+  mutate(rate = round((TotalCases/population)*1000, 3),
          cases_popup = str_c("<strong>", area_name, "</strong><br/>", TotalCases, " cases") %>% map(HTML),
-         rate_popup = str_c("<strong>", area_name, "</strong><br/>", rate, " cases per 1,000 population") %>% map(HTML))
+         rate_popup = str_c("<strong>", area_name, "</strong><br/>", rate, " cases per 1,000 population") %>% map(HTML)) %>% 
+  select(-geometry, everything())
 ```
 
 Row
@@ -117,7 +118,8 @@ renderLeaflet({
     addTiles(urlTemplate = "",
            attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
     addPolygons(data = cases_by_area, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd") %>% 
-    addCircleMarkers(data = cases_by_area, lng = ~long, lat = ~lat, radius = ~sqrt(TotalCases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~cases_popup) %>% 
+    # exclude proportional symbols without confirmed cases
+    addCircleMarkers(data = filter(cases_by_area, rate != 0), lng = ~long, lat = ~lat, radius = ~sqrt(TotalCases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~cases_popup) %>% 
     addFullscreenControl() %>% 
     addResetMapButton() %>% 
     onRender(
@@ -132,9 +134,11 @@ renderLeaflet({
   breaks <- classIntervals(cases_by_area$rate, n = 5, style = "jenks")$brks
   pal <- colorBin(palette = "Blues", domain = NULL, bins = breaks, na.color = "#FFFFFF")
   
-  leaflet(data = cases_by_area) %>%
+  leaflet(data = filter(cases_by_area, rate != 0)) %>%
     setView(-3, 54.3, zoom = 5) %>% 
     addTiles(urlTemplate = "", attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
+    # areas without confirmed cases
+    addPolygons(data = filter(cases_by_area, rate == 0), fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd", label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
     addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 1, color = "#bdbdbd", opacity = 1, label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
     addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Cases per 1,000 population", position = "bottomright") %>% 
     addFullscreenControl() %>% 
