@@ -5,69 +5,53 @@ output:
     theme: lumen
     orientation: rows
     logo: logo.png
+    source_code: "https://github.com/trafforddatalab/covid-19"
     css: styles.css
 runtime: shiny
 ---
 
-<strong>Confirmed UK cases of COVID-19 as of `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong><br/>Please note that the number of confirmed cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.trafford.gov.uk/covid-19" target="_blank">trafford.gov.uk/covid-19</a>
-
 ```{r setup, include=FALSE}
 library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales) ; library(classInt)
 
-# Data published by Public Health England 
-# https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases
-
-# latest confirmed cases by country and total UK deaths
-url <- "https://www.arcgis.com/sharing/rest/content/items/bc8ee90225644ef7a6f4dd1b13ea1d67/data"
-GET(url, write_disk(tmp <- tempfile(fileext = ".xlsx")))
-daily_indicators <- read_xlsx(tmp) %>% 
-  mutate(DateVal = as.Date(DateVal, format = "%d/%m/%y"))
-
-# confirmed cases by country
-cases_by_country <- tibble(
-  area_code = c("N92000002", "S92000003", "W92000004"),
-  TotalCases = c(daily_indicators$NICases, daily_indicators$ScotlandCases, daily_indicators$WalesCases)
-)
-
-# time series of daily confirmed cases
-url <- "https://www.arcgis.com/sharing/rest/content/items/e5fd11150d274bebaaf8fe2a7a2bda11/data"
-GET(url, write_disk(tmp <- tempfile(fileext = ".xlsx")))
-daily_cases <- read_xlsx(tmp) %>% 
-  mutate(DateVal = as.Date(DateVal, format = "%d/%m/%y"))
-
-# confirmed cases by Upper Tier Local Authority (UTLA) in England
-utla_cases <- read_csv("https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data") %>% 
-  select(area_code = GSS_CD, TotalCases) %>% 
-  bind_rows(cases_by_country)
-
-cases_by_area <- st_read("data/areas.geojson") %>% 
-  left_join(utla_cases, by = "area_code") %>%
-  mutate(rate = round((TotalCases/population)*100000, 1),
-         cases_popup = str_c("<strong>", area_name, "</strong><br/>", TotalCases, " cases") %>% map(HTML),
-         rate_popup = str_c("<strong>", area_name, "</strong><br/>", rate, " cases per 100,000 population") %>% map(HTML)) %>% 
-  select(-geometry, everything())
+source("data/load_covid19_data.R")
 ```
+
+Cases
+=======================================================================
 
 Row
 -----------------------------------------------------------------------
 
-### Total confirmed UK cases
-```{r}
-valueBox(comma(max(daily_cases$CumCases)))
-```
-
-### New confirmed UK cases on `r format(daily_indicators$DateVal, '%d %B %Y')`
+### New confirmed UK cases (`r format(daily_indicators$DateVal, '%d %B %Y')`)
 ```{r}
 valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount)))
 ```
 
-### Total UK deaths
+### Total confirmed UK cases (`r format(daily_indicators$DateVal, '%d %B %Y')`)
 ```{r}
-valueBox(comma(daily_indicators$TotalUKDeaths))
+valueBox(comma(max(daily_cases$CumCases)))
 ```
 
-Row
+Row {data-height=300}
 -------------------------------------
+
+### Daily new confirmed cases
+```{r}
+renderPlot({
+  ggplot(daily_cases, aes(x = DateVal, y = CMODateCount)) +
+  geom_col(fill = "#57AACB") +
+  geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+  scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
+  scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
+  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+       caption = "Source: Public Health England") +
+  theme_minimal(base_size = 16) +
+  theme(plot.margin = unit(rep(0.5, 4), "cm"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
+}, execOnResize = TRUE)
+```
 
 ### Cumulative confirmed cases
 ```{r}
@@ -89,25 +73,7 @@ renderPlot({
 }, execOnResize = TRUE)
 ```
 
-### Daily confirmed cases
-```{r}
-renderPlot({
-  ggplot(daily_cases, aes(x = DateVal, y = CMODateCount)) +
-  geom_col(fill = "#57AACB") +
-  geom_hline(yintercept = 0, size = 1, colour = "#333333") +
-  scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-  scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
-  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
-       caption = "Source: Public Health England") +
-  theme_minimal(base_size = 16) +
-  theme(plot.margin = unit(rep(0.5, 4), "cm"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank(),
-        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
-}, execOnResize = TRUE)
-```
-
-Row {data-height=700}
+Row
 -------------------------------------
 
 ### Confirmed cases by country / UTLA in England
@@ -148,3 +114,77 @@ renderLeaflet({
       paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
 })
 ```
+
+Deaths
+=======================================================================
+
+Row
+-----------------------------------------------------------------------
+
+### New confirmed UK deaths (`r format(max(deaths$DateRep), '%d %B %Y')`)
+```{r}
+valueBox(comma(pull(filter(deaths, DateRep == max(DateRep)), Deaths)))
+```
+
+### Total confirmed UK deaths (`r format(max(deaths$DateRep), '%d %B %Y')`)
+```{r}
+valueBox(comma(pull(filter(deaths, DateRep == max(DateRep)), CumDeaths)))
+```
+
+Row {data-height=700}
+-------------------------------------
+
+### Daily new confirmed deaths
+```{r}
+renderPlot({
+  ggplot(deaths, aes(x = DateRep, y = Deaths)) +
+    geom_col(fill = "#57AACB") +
+    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+         caption = "Source: European Center for Disease Control and Prevention") +
+    theme_minimal(base_size = 16) +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
+}, execOnResize = TRUE)
+```
+
+### Cumulative confirmed deaths
+```{r}
+renderPlot({
+  ggplot(deaths, aes(x = DateRep, y = CumDeaths)) +
+    geom_line(colour = "#57AACB", size = 1) +
+    geom_point(colour = "#57AACB", size = 2) +
+    scale_y_continuous(labels = comma, expand = c(0.005, 0.005), sec.axis = sec_axis(~ ., breaks = max(deaths$CumDeaths), labels = comma)) +
+    scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
+    geom_hline(yintercept = 0, size = 0.5, colour = "#212121") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+         caption = "Source: European Center for Disease Control and Prevention") +
+    theme_minimal(base_size = 16) +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
+    expand_limits(y = c(0,max(deaths$CumDeaths)*1.01))
+  
+}, execOnResize = TRUE)
+```
+
+About {data-icon="fa-info-circle"}
+=======================================================================
+
+###
+
+<div class = "about">
+This dashboard visualises confirmed UK cases and deaths from coronavirus (COVID-19) using data published by:     
+
+- <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a> (last updated at 18:00 (GMT) on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`)     
+- <a href="https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide" target="_blank">European Center for Disease Control and Prevention</a> (last updated at 10:00 (CET) on `r renderText({format(max(deaths$DateRep)+1, '%d %B %Y')})`)     
+
+Please note that the number of confirmed cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested.    
+
+<strong>Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">https://www.gov.uk/coronavirus</a></strong>
+</div>

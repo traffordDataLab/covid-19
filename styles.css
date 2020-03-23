@@ -22,6 +22,12 @@ a:hover {
   text-decoration: underline;
 }
 
+div.about { 
+  font-size: 1.2em;
+  font-family: 'Open Sans', sans-serif;
+  padding: 20px;
+}
+
 .navbar-logo {
      max-width:48px;
      max-height:48px;
