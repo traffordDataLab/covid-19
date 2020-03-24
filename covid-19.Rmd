@@ -55,11 +55,8 @@ cases_by_area <- st_read("data/areas.geojson") %>%
 daily_deaths <- read_csv("https://github.com/emmadoughty/Daily_COVID-19/raw/master/Data/COVID19_by_day.csv") %>% 
   select(Date, NewDeaths, CumDeaths) %>% 
   mutate(Date = as.Date(Date, format = "%d/%m/%Y")) %>% 
-  filter(Date >= "2020-03-05") %>% # date of first UK death
-  pivot_longer(-Date, names_to = "measure", values_to = "n")
+  filter(Date >= "2020-03-05") # date of first UK death
 ```
-
-<strong>Last updated on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong>
 
 Cases 
 =======================================================================
@@ -67,12 +64,12 @@ Cases
 Row
 -----------------------------------------------------------------------
 
-### New confirmed UK cases
+### <strong>New confirmed UK cases</strong><br/><small>as of `r format(daily_indicators$DateVal, '%d %B %Y')`</small>
 ```{r}
 valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount)))
 ```
 
-### Total confirmed UK cases
+### <strong>Total confirmed UK cases</strong><br/><small>as of `r format(daily_indicators$DateVal, '%d %B %Y')`</small>
 ```{r}
 valueBox(comma(max(daily_cases$CumCases)))
 ```
@@ -166,38 +163,58 @@ Deaths
 Row
 -------------------------------------
 
-### New confirmed UK deaths
+### <strong>New confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
 ```{r}
-valueBox(comma(pull(filter(daily_deaths, measure == "NewDeaths", Date == max(Date)), n)))
+valueBox(comma(pull(filter(daily_deaths, Date == max(Date)), NewDeaths)))
 ```
 
-### Total confirmed UK deaths
+### <strong>Total confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
 ```{r}
-valueBox(comma(daily_indicators$TotalUKDeaths))
+valueBox(comma(max(daily_deaths$CumDeaths)))
 ```
 
 Row
 -------------------------------------
 
-### Daily and cumulative confirmed deaths
+### Daily confirmed deaths
+
 ```{r}
 renderPlot({
-  ggplot(data = filter(daily_deaths, measure == "NewDeaths"), aes(x = Date, y = n)) +
-  geom_col(data = filter(daily_deaths, measure == "CumDeaths"), fill = "#c0dfec") +
-  geom_col(fill = "#57AACB") +
-  geom_hline(yintercept = 0, size = 1, colour = "#333333") +
-  scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-  scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
-  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
-       caption = "Source: Public Health England") +
-  theme_minimal(base_size = 16) +
-  theme(plot.margin = unit(rep(0.5, 4), "cm"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank(),
-        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
+  ggplot(daily_deaths, aes(x = Date, y = NewDeaths)) +
+    geom_col(fill = "#57AACB") +
+    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+        caption = "Source: Public Health England") +
+    theme_minimal(base_size = 16) +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
 }, execOnResize = TRUE)
 ```
 
+### Cumulative confirmed deaths
+
+```{r}
+renderPlot({
+  ggplot(daily_deaths, aes(x = Date, y = CumDeaths)) +
+    geom_line(colour = "#57AACB", size = 1) +
+    geom_point(colour = "#57AACB", size = 2) +
+    scale_y_continuous(labels = comma, expand = c(0.005, 0.005), sec.axis = sec_axis(~ ., breaks = max(daily_deaths$CumDeaths), labels = comma)) +
+    scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
+    geom_hline(yintercept = 0, size = 0.5, colour = "#212121") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+        caption = "Source: Public Health England") +
+    theme_minimal(base_size = 16) +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
+      expand_limits(y = c(0, max(daily_deaths$CumDeaths)*1.01))
+}, execOnResize = TRUE)
+```
 
 About {data-icon="fa-info-circle"}
 =======================================================================
@@ -205,8 +222,7 @@ About {data-icon="fa-info-circle"}
 ### 
 
 <div class = "about">
-<p>This dashboard visualises daily confirmed coronavirus cases and deaths in the UK published by <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>.</p>
-<p>Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">https://www.gov.uk/coronavirus</a></p>
+<p>This dashboard visualises daily confirmed coronavirus cases and deaths in the UK published by <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
 <strong>Data sources</strong>
  <ul>
     <li><a href="https://www.arcgis.com/home/item.html?id=bc8ee90225644ef7a6f4dd1b13ea1d67" target="_blank">Total confirmed cases for countries of the UK and total deaths in the UK</a></li>
