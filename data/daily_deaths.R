@@ -5,8 +5,9 @@ library(tidyverse) ; library(httr) ; library(readxl)
 # Source: European Centre for Disease Prevention and Control
 # URL: https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
 
-url <- paste("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-",format(Sys.time(), "%Y-%m-%d"), ".xlsx", sep = "")
-GET(url, authenticate(":", ":", type = "ntlm"), write_disk(tmp <- tempfile(fileext = ".xlsx")))
+tmp <- tempfile(fileext = ".xlsx")
+GET(url = "https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-2020-03-23.xlsx",
+    write_disk(tmp))
 
 deaths <- read_excel(tmp) %>% 
   filter(`Countries and territories` == "United_Kingdom") %>% 
