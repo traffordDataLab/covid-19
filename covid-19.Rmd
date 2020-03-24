@@ -59,13 +59,10 @@ daily_deaths <- read_csv("https://github.com/emmadoughty/Daily_COVID-19/raw/mast
   pivot_longer(-Date, names_to = "measure", values_to = "n")
 ```
 
-Dashboard
-=======================================================================
+<strong>Last updated on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong>
 
-Row {data-height=80}
------------------------------------------------------------------------
-### 
-<strong>Last updated on `r renderText({format(daily_indicators$DateVal, '%d %B %Y')})`</strong><br/>Please note that the number of confirmed coronavirus cases is likely to be much lower than the total number of cases because some people who report symptoms are not being tested.
+Cases 
+=======================================================================
 
 Row
 -----------------------------------------------------------------------
@@ -78,16 +75,6 @@ valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount))
 ### Total confirmed UK cases
 ```{r}
 valueBox(comma(max(daily_cases$CumCases)))
-```
-
-### New confirmed UK deaths
-```{r}
-valueBox(comma(pull(filter(daily_deaths, measure == "NewDeaths", Date == max(Date)), n)))
-```
-
-### Total confirmed UK deaths
-```{r}
-valueBox(comma(daily_indicators$TotalUKDeaths))
 ```
 
 Row {data-height=300}
@@ -128,25 +115,6 @@ renderPlot({
         panel.grid.minor = element_blank(),
         plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
     expand_limits(y = c(0,max(daily_cases$CumCases)*1.01))
-}, execOnResize = TRUE)
-```
-
-### Daily and cumulative confirmed deaths
-```{r}
-renderPlot({
-  ggplot(data = filter(daily_deaths, measure == "NewDeaths"), aes(x = Date, y = n)) +
-  geom_col(data = filter(daily_deaths, measure == "CumDeaths"), fill = "#c0dfec") +
-  geom_col(fill = "#57AACB") +
-  geom_hline(yintercept = 0, size = 1, colour = "#333333") +
-  scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-  scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
-  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
-       caption = "Source: Public Health England") +
-  theme_minimal(base_size = 16) +
-  theme(plot.margin = unit(rep(0.5, 4), "cm"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank(),
-        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
 }, execOnResize = TRUE)
 ```
 
@@ -191,6 +159,45 @@ renderLeaflet({
       paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
 })
 ```
+
+Deaths 
+=======================================================================
+
+Row
+-------------------------------------
+
+### New confirmed UK deaths
+```{r}
+valueBox(comma(pull(filter(daily_deaths, measure == "NewDeaths", Date == max(Date)), n)))
+```
+
+### Total confirmed UK deaths
+```{r}
+valueBox(comma(daily_indicators$TotalUKDeaths))
+```
+
+Row
+-------------------------------------
+
+### Daily and cumulative confirmed deaths
+```{r}
+renderPlot({
+  ggplot(data = filter(daily_deaths, measure == "NewDeaths"), aes(x = Date, y = n)) +
+  geom_col(data = filter(daily_deaths, measure == "CumDeaths"), fill = "#c0dfec") +
+  geom_col(fill = "#57AACB") +
+  geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+  scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
+  scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
+  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
+       caption = "Source: Public Health England") +
+  theme_minimal(base_size = 16) +
+  theme(plot.margin = unit(rep(0.5, 4), "cm"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
+}, execOnResize = TRUE)
+```
+
 
 About {data-icon="fa-info-circle"}
 =======================================================================
