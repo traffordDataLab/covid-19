@@ -12,7 +12,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales) ; library(classInt)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales) ; library(classInt) ; library(plotly)
 
 # Data published by Public Health England 
 # https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases
@@ -55,7 +55,7 @@ cases_by_area <- st_read("data/areas.geojson") %>%
 daily_deaths <- read_csv("https://github.com/emmadoughty/Daily_COVID-19/raw/master/Data/COVID19_by_day.csv") %>% 
   select(Date, NewDeaths, CumDeaths) %>% 
   mutate(Date = as.Date(Date, format = "%d/%m/%Y")) %>% 
-  filter(Date >= "2020-03-05") # date of first UK death
+  filter(Date >= "2020-03-06") # date of first UK death
 ```
 
 Cases 
@@ -79,40 +79,48 @@ Row {data-height=300}
 
 ### Daily confirmed cases
 ```{r}
-renderPlot({
-  ggplot(daily_cases, aes(x = DateVal, y = CMODateCount)) +
-  geom_col(fill = "#57AACB") +
-  geom_hline(yintercept = 0, size = 1, colour = "#333333") +
-  scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-  scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
-  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
-       caption = "Source: Public Health England") +
-  theme_minimal(base_size = 16) +
-  theme(plot.margin = unit(rep(0.5, 4), "cm"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank(),
-        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
-}, execOnResize = TRUE)
+renderPlotly({
+  p <- ggplot(daily_cases, aes(x = DateVal, y = CMODateCount, text = paste0("<b>", comma(CMODateCount), "</b> cases<br>", format(DateVal, "%d %B")))) +
+    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    geom_col(fill = "#57AACB") +
+    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    theme_minimal() +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
+  
+  ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE))  
+})
 ```
 
 ### Cumulative confirmed cases
 ```{r}
-renderPlot({
-  ggplot(daily_cases, aes(x = DateVal, y = CumCases)) +
-  geom_line(colour = "#57AACB", size = 1) +
-  geom_point(colour = "#57AACB", size = 2) +
-  scale_y_continuous(labels = comma, expand = c(0.005, 0.005), sec.axis = sec_axis(~ ., breaks = max(daily_cases$CumCases), labels = comma)) +
-  scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
-  geom_hline(yintercept = 0, size = 0.5, colour = "#212121") +
-  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
-       caption = "Source: Public Health England") +
-  theme_minimal(base_size = 16) +
-  theme(plot.margin = unit(rep(0.5, 4), "cm"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank(),
-        plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
+renderPlotly({
+  p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases), "</b> cases<br>", format(DateVal, "%d %B")))) +
+    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    geom_line(colour = "#57AACB", size = 0.5) +
+    geom_point(shape = 21, colour = "white", fill = "#57AACB", size = 2.5) +
+    scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    theme_minimal() +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
     expand_limits(y = c(0,max(daily_cases$CumCases)*1.01))
-}, execOnResize = TRUE)
+  
+  ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) 
+})
 ```
 
 Row
@@ -177,43 +185,49 @@ Row
 -------------------------------------
 
 ### Daily confirmed deaths
-
 ```{r}
-renderPlot({
-  ggplot(daily_deaths, aes(x = Date, y = NewDeaths)) +
-    geom_col(fill = "#57AACB") +
+renderPlotly({
+  p <- ggplot(daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
     geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    geom_col(fill = "#57AACB") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), position = "right") +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
-        caption = "Source: Public Health England") +
-    theme_minimal(base_size = 16) +
+    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank(),
           plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
-}, execOnResize = TRUE)
+  
+  ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) 
+})
 ```
 
 ### Cumulative confirmed deaths
-
 ```{r}
-renderPlot({
-  ggplot(daily_deaths, aes(x = Date, y = CumDeaths)) +
-    geom_line(colour = "#57AACB", size = 1) +
-    geom_point(colour = "#57AACB", size = 2) +
-    scale_y_continuous(labels = comma, expand = c(0.005, 0.005), sec.axis = sec_axis(~ ., breaks = max(daily_deaths$CumDeaths), labels = comma)) +
+renderPlotly({
+  p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
+    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    geom_line(colour = "#57AACB", size = 0.5) +
+    geom_point(shape = 21, colour = "white", fill = "#57AACB", size = 2.5) +
     scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
-    geom_hline(yintercept = 0, size = 0.5, colour = "#212121") +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL,
-        caption = "Source: Public Health England") +
-    theme_minimal(base_size = 16) +
+    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank(),
           plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
       expand_limits(y = c(0, max(daily_deaths$CumDeaths)*1.01))
-}, execOnResize = TRUE)
+  
+  ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) 
+})
 ```
 
 About {data-icon="fa-info-circle"}
@@ -232,5 +246,5 @@ About {data-icon="fa-info-circle"}
 </li>
  </ul>
 <strong>Credits</strong>
-<p>This application was built using the <a href="https://cran.r-project.org" target="_blank">R</a> <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">Shiny</a> package.</p>
+<p>This application was built in <a href="https://cran.r-project.org" target="_blank">R</a> using the <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">shiny</a>, <a href="https://cran.r-project.org/web/packages/flexdashboard/index.html" target="_blank">flexdashboard</a>, <a href="https://cran.r-project.org/web/packages/ggplot2/index.html" target="_blank">ggplot2</a>, <a href="https://cran.r-project.org/web/packages/plotly/index.html" target="_blank">plotly</a> and <a href="https://cran.r-project.org/web/packages/leaflet/index.html" target="_blank">leaflet</a> packages.</p>
 </div>
