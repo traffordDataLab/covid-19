@@ -1,9 +1,10 @@
 
 ### Daily deaths log
 
+<br/>
 **Data sources**
 
-- The Department of Health and Social Care publish updates on their Twitter feed: <a href="https://twitter.com/DHSCgovuk" target="_blank">@DHSCgovuk</a>
+- Updates on the <a href="https://twitter.com/DHSCgovuk" target="_blank">@DHSCgovuk</a> Twitter feed
 
 ```
 library(tidyverse) ; library(rtweet) ; library(lubridate)
@@ -21,7 +22,7 @@ df <- tweets %>%
   select(Date, NewDeaths, CumDeaths)
 ```
 
-- <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a> publish number of UK deaths due to coronavirus in their <a href="https://www.arcgis.com/home/item.html?id=bc8ee90225644ef7a6f4dd1b13ea1d67" target="_blank">DailyIndicators</a> table at around 1800 hours.
+- <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England's</a> <a href="https://www.arcgis.com/apps/opsdashboard/index.html#/f94c3c90da5b4e9f9a0b19484dd4bb14" target="_blank">COVID-19 dashboard</a> and <a href="https://www.arcgis.com/home/item.html?id=bc8ee90225644ef7a6f4dd1b13ea1d67" target="_blank">DailyIndicators</a> table
 
 ```
 library(httr) ; library(readxl)
@@ -31,7 +32,7 @@ df <- read_xlsx(tmp) %>%
   mutate(DateVal = as.Date(DateVal, format = "%d/%m/%y"))
 ```
 
-- The <a href="https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide" target="_blank">European Centre for Disease Prevention and Control</a> publish time series data of daily UK deaths.
+- <a href="https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide" target="_blank">European Centre for Disease Prevention and Control's</a> time series data
 
 ```
 url <- paste("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-",format(Sys.time(), "%Y-%m-%d"), ".xlsx", sep = "")
@@ -46,6 +47,7 @@ df <- read_excel(tmp) %>%
   filter(DateRep >= "2020-03-05")
 ```
 
+---
 
 **Data source log**
 
