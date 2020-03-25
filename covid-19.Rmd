@@ -52,7 +52,7 @@ cases_by_area <- st_read("data/areas.geojson") %>%
 
 # Time series of daily confirmed deaths in the UK
 # URL: https://github.com/emmadoughty/Daily_COVID-19
-daily_deaths <- read_csv("data/daily_deaths.csv") %>% 
+daily_deaths <- read_csv("https://github.com/traffordDataLab/covid-19/raw/master/data/daily_deaths.csv") %>% 
   mutate(Date = as.Date(Date, format = "%d/%m/%Y"))
 ```
 
