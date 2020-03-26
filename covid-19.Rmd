@@ -236,6 +236,7 @@ About {data-icon="fa-info-circle"}
 <div class = "about">
 <p>This dashboard visualises daily confirmed coronavirus cases and deaths in the UK published by <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
 <strong>Please note</strong>
+<p>The recording period for confirmed cases and deaths in the UK <a href="https://twitter.com/DHSCgovuk/status/1243237217016983559?s=20" target="_blank">differ</a>. Confirmed cases refer to the period between 9am and 9am and deaths between 5pm and 5pm. The number of confirmed UK cases and deaths are both <a href="https://www.gov.uk/guidance/coronavirus-covid-19-information-for-the-public#number-of-cases" target="_blank">published at 2pm</a>.</p>
 <p>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms are not being tested.</p>
 <strong>Data sources</strong>
  <ul>
