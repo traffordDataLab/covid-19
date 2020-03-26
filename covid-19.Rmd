@@ -5,7 +5,7 @@ output:
     theme: lumen
     orientation: rows
     logo: logo.png
-    source_code: embed
+    source_code: https://github.com/traffordDataLab/covid-19
     social: ["twitter"]
     css: styles.css
 runtime: shiny
@@ -142,7 +142,7 @@ renderLeaflet({
 })
 ```
 
-### Rate of confirmed cases by country / UTLA in England
+### Infection rates per 100,000 population
 ```{r}
 renderLeaflet({
   breaks <- classIntervals(cases_by_area$rate, n = 5, style = "jenks")$brks
@@ -235,6 +235,8 @@ About {data-icon="fa-info-circle"}
 
 <div class = "about">
 <p>This dashboard visualises daily confirmed coronavirus cases and deaths in the UK published by <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
+<strong>Please note</strong>
+<p>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms are not being tested.</p>
 <strong>Data sources</strong>
  <ul>
     <li><a href="https://www.arcgis.com/home/item.html?id=bc8ee90225644ef7a6f4dd1b13ea1d67" target="_blank">Total confirmed cases for countries of the UK and total deaths in the UK</a></li>
