@@ -1,4 +1,4 @@
-# COVID-19
+# COVID-19 monitor
 Dashboard visualising Public Health England coronavirus (COVID-19) data.
 
 <img src="screenshot.png" width="50%"> 
