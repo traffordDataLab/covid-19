@@ -1,6 +1,6 @@
 # Daily confirmed deaths #
 
-library(tidyverse) ; library(rtweet) ; library(lubridate) ; library(httr) ; library(readxl)
+library(tidyverse) ; library(rtweet) ; library(lubridate) ; library(rvest) ; library(httr) ; library(readxl)
   
 # @DHSCgovuk Twitter updates
 # https://twitter.com/DHSCgovuk/
@@ -16,6 +16,12 @@ df <- tweets %>%
   arrange(Date) %>% 
   mutate(NewDeaths = CumDeaths - lag(CumDeaths, default = first(CumDeaths))) %>% 
   select(Date, NewDeaths, CumDeaths)
+
+# Department of Health and Social Care and Public Health England 
+# https://www.gov.uk/guidance/coronavirus-covid-19-information-for-the-public#number-of-cases
+
+url <- "https://www.gov.uk/guidance/coronavirus-covid-19-information-for-the-public#number-of-cases"
+parse_number(str_extract(html_text(html_nodes(read_html(url), "p:nth-child(5)"))[1],"(?<=, ).*(?= patients)"))
 
 # Public Health England
 # https://www.arcgis.com/home/item.html?id=bc8ee90225644ef7a6f4dd1b13ea1d67
