@@ -132,8 +132,7 @@ renderLeaflet({
     addTiles(urlTemplate = "",
            attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
     addPolygons(data = cases_by_area, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd") %>% 
-    # exclude proportional symbols without confirmed cases
-    addCircleMarkers(data = filter(cases_by_area, rate != 0), lng = ~long, lat = ~lat, radius = ~sqrt(TotalCases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~cases_popup) %>% 
+    addCircleMarkers(data = cases_by_area, lng = ~long, lat = ~lat, radius = ~sqrt(TotalCases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~cases_popup) %>% 
     addFullscreenControl() %>% 
     addResetMapButton() %>% 
     onRender(
