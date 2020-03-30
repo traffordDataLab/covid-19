@@ -51,8 +51,11 @@ cases_by_area <- st_read("data/areas.geojson") %>%
   select(-geometry, everything())
 
 # Time series of daily confirmed deaths in the UK
-# URL: https://github.com/emmadoughty/Daily_COVID-19
-daily_deaths <- read_csv("https://github.com/traffordDataLab/covid-19/raw/master/data/daily_deaths.csv") %>% 
+# URL: https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx
+daily_deaths <- read_csv("https://github.com/traffordDataLab/covid-19/raw/master/data/daily_deaths.csv", col_types = cols(
+  Date = col_date(NULL),
+  NewDeaths = col_integer(),
+  CumDeaths = col_integer())) %>% 
   mutate(Date = as.Date(Date, format = "%d/%m/%Y"))
 ```
 
@@ -72,14 +75,14 @@ valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount))
 valueBox(comma(max(daily_cases$CumCases)))
 ```
 
-Row {data-height=300}
+Row {data-height=400}
 -------------------------------------
 
 ### Daily confirmed cases
 ```{r}
 renderPlotly({
   p <- ggplot(daily_cases, aes(x = DateVal, y = CMODateCount, text = paste0("<b>", comma(CMODateCount), "</b> cases<br>", format(DateVal, "%d %B")))) +
-    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_col(fill = "#57AACB") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
@@ -99,20 +102,29 @@ renderPlotly({
 
 ### Cumulative confirmed cases
 ```{r}
-renderPlotly({
+fillCol(flex = c(NA, 1),
+        radioButtons("cases_scale", label = NULL, choices = c("Linear", "Logarithmic"), selected = "Linear", inline = TRUE),
+        plotlyOutput("cases_plot", height = "100%")
+        )
+
+output$cases_plot <- renderPlotly({
   p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases), "</b> cases<br>", format(DateVal, "%d %B")))) +
-    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_line(colour = "#57AACB", size = 0.5) +
     geom_point(shape = 21, colour = "white", fill = "#57AACB", size = 2.5) +
-    scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
     theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
-    expand_limits(y = c(0,max(daily_cases$CumCases)*1.01))
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
+  
+    if (input$cases_scale == "Linear") {
+    p <- p + scale_y_continuous(expand = c(0.1,0.1), labels = comma) + geom_hline(yintercept = 0, size = 0.3, colour = "#333333")
+    } else {
+      p <- p + scale_y_log10(expand = c(0.1,0.1)) + geom_hline(yintercept = 1, size = 0.3, colour = "#333333")
+    }
   
   ggplotly(p, tooltip = "text") %>%
     config(displayModeBar = FALSE) %>% 
@@ -124,13 +136,13 @@ renderPlotly({
 Row
 -------------------------------------
 
-### Confirmed cases by country / UTLA in England
+### Confirmed cases by area
 ```{r}
 renderLeaflet({
   leaflet() %>%
     setView(-3, 54.3, zoom = 5) %>% 
     addTiles(urlTemplate = "",
-           attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
+           attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
     addPolygons(data = cases_by_area, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd") %>% 
     addCircleMarkers(data = cases_by_area, lng = ~long, lat = ~lat, radius = ~sqrt(TotalCases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~cases_popup) %>% 
     addFullscreenControl() %>% 
@@ -141,7 +153,7 @@ renderLeaflet({
 })
 ```
 
-### Infection rates per 100,000 population
+### Infection rate
 ```{r}
 renderLeaflet({
   breaks <- classIntervals(cases_by_area$rate, n = 5, style = "jenks")$brks
@@ -149,7 +161,7 @@ renderLeaflet({
   
   leaflet(data = cases_by_area) %>%
     setView(-3, 54.3, zoom = 5) %>% 
-    addTiles(urlTemplate = "", attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
+    addTiles(urlTemplate = "", attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
     addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 1, color = "#bdbdbd", opacity = 1, label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
     addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Cases per 100,000 population", position = "bottomright") %>% 
     addFullscreenControl() %>% 
@@ -183,7 +195,7 @@ Row
 ```{r}
 renderPlotly({
   p <- ggplot(daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
-    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
+    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_col(fill = "#57AACB") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
@@ -203,13 +215,16 @@ renderPlotly({
 
 ### Cumulative confirmed deaths
 ```{r}
-renderPlotly({
+fillCol(flex = c(NA, 1),
+        radioButtons("deaths_scale", label = NULL, choices = c("Linear", "Logarithmic"), selected = "Linear", inline = TRUE),
+        plotlyOutput("deaths_plot", height = "100%")
+        )
+
+output$deaths_plot <- renderPlotly({
   p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
-    geom_hline(yintercept = 0, size = 1, colour = "#333333") +
     geom_line(colour = "#57AACB", size = 0.5) +
     geom_point(shape = 21, colour = "white", fill = "#57AACB", size = 2.5) +
-    scale_x_date(expand = c(0.005, 0.1), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
     theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
@@ -217,6 +232,12 @@ renderPlotly({
           panel.grid.minor = element_blank(),
           plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
       expand_limits(y = c(0, max(daily_deaths$CumDeaths)*1.01))
+  
+  if (input$deaths_scale == "Linear") {
+    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.1,0.1), labels = comma)
+    } else {
+      p <- p + geom_hline(yintercept = 01, size = 0.3, colour = "#333333") + scale_y_log10(expand = c(0.005, 0.005))
+    }
   
   ggplotly(p, tooltip = "text") %>%
     config(displayModeBar = FALSE) %>% 
