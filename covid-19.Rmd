@@ -75,7 +75,7 @@ valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount))
 valueBox(comma(max(daily_cases$CumCases)))
 ```
 
-Row {data-height=600}
+Row {.tabset .tabset-fade}
 -------------------------------------
 
 ### Daily confirmed cases
@@ -110,7 +110,7 @@ fillCol(flex = c(NA, 1),
 output$cases_plot <- renderPlotly({
   p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases), "</b> cases<br>", format(DateVal, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_line(colour = "#57AACB", size = 0.5) +
+    geom_line(colour = "#57AACB", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
     theme_minimal() +
@@ -120,9 +120,9 @@ output$cases_plot <- renderPlotly({
           plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
   
     if (input$cases_scale == "Linear") {
-    p <- p + scale_y_continuous(expand = c(0.1,0.1), labels = comma) + geom_hline(yintercept = 0, size = 0.3, colour = "#333333")
+    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
     } else {
-      p <- p + scale_y_log10(expand = c(0.1,0.1)) + geom_hline(yintercept = 1, size = 0.3, colour = "#333333")
+      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_log10(expand = c(0.005, 0.005))
     }
   
   ggplotly(p, tooltip = "text") %>%
@@ -132,14 +132,11 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-Row
--------------------------------------
-
 ### Confirmed cases by area
 ```{r}
 renderLeaflet({
   leaflet() %>%
-    setView(-3, 54.3, zoom = 4) %>% 
+    setView(-3, 54.3, zoom = 6) %>% 
     addTiles(urlTemplate = "",
            attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
     addPolygons(data = cases_by_area, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd") %>% 
@@ -152,14 +149,14 @@ renderLeaflet({
 })
 ```
 
-### Infection rate
+### Infection rate by area
 ```{r}
 renderLeaflet({
   breaks <- classIntervals(cases_by_area$rate, n = 5, style = "jenks")$brks
   pal <- colorBin(palette = "Blues", domain = NULL, bins = breaks, na.color = "#FFFFFF")
   
   leaflet(data = cases_by_area) %>%
-    setView(-3, 54.3, zoom = 4) %>% 
+    setView(-3, 54.3, zoom = 6) %>% 
     addTiles(urlTemplate = "", attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
     addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 1, color = "#bdbdbd", opacity = 1, label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
     addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Cases per 100,000 population", position = "bottomright") %>% 
@@ -187,7 +184,7 @@ valueBox(comma(pull(filter(daily_deaths, Date == max(Date)), NewDeaths)))
 valueBox(comma(max(daily_deaths$CumDeaths)))
 ```
 
-Row
+Row {.tabset .tabset-fade}
 -------------------------------------
 
 ### Daily confirmed deaths
@@ -221,7 +218,7 @@ fillCol(flex = c(NA, 1),
 
 output$deaths_plot <- renderPlotly({
   p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
-    geom_line(colour = "#57AACB", size = 0.5) +
+    geom_line(colour = "#57AACB", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
     theme_minimal() +
@@ -232,9 +229,9 @@ output$deaths_plot <- renderPlotly({
       expand_limits(y = c(0, max(daily_deaths$CumDeaths)*1.01))
   
   if (input$deaths_scale == "Linear") {
-    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.1,0.1), labels = comma)
+    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
     } else {
-      p <- p + geom_hline(yintercept = 01, size = 0.3, colour = "#333333") + scale_y_log10(expand = c(0.005, 0.005))
+      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_log10(expand = c(0.005, 0.005))
     }
   
   ggplotly(p, tooltip = "text") %>%
