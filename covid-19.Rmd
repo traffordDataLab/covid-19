@@ -75,7 +75,7 @@ valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount))
 valueBox(comma(max(daily_cases$CumCases)))
 ```
 
-Row {data-height=400}
+Row {data-height=600}
 -------------------------------------
 
 ### Daily confirmed cases
@@ -140,7 +140,7 @@ Row
 ```{r}
 renderLeaflet({
   leaflet() %>%
-    setView(-3, 54.3, zoom = 5) %>% 
+    setView(-3, 54.3, zoom = 4) %>% 
     addTiles(urlTemplate = "",
            attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
     addPolygons(data = cases_by_area, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd") %>% 
@@ -160,7 +160,7 @@ renderLeaflet({
   pal <- colorBin(palette = "Blues", domain = NULL, bins = breaks, na.color = "#FFFFFF")
   
   leaflet(data = cases_by_area) %>%
-    setView(-3, 54.3, zoom = 5) %>% 
+    setView(-3, 54.3, zoom = 4) %>% 
     addTiles(urlTemplate = "", attribution = '<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', options = providerTileOptions(minZoom = 5, maxZoom = 9)) %>%
     addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 1, color = "#bdbdbd", opacity = 1, label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
     addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Cases per 100,000 population", position = "bottomright") %>% 
@@ -254,7 +254,10 @@ About {data-icon="fa-info-circle"}
 <div class = "about">
 <p>This dashboard visualises daily confirmed coronavirus cases and deaths in the UK published by <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
 <strong>Please note</strong>
-<p>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms are not being tested.</p>
+  <ul>
+    <li>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms are not being tested</li>
+    <li>The number of confirmed deaths only includes those who have died in hospital</li>
+  </ul>
 <strong>Data sources</strong>
 <p>As of 25 March 2020, the reporting period for UK COVID-19 deaths  <a href="https://twitter.com/DHSCgovuk/status/1243237211119800323" target="_blank">changed</a>. Confirmed cases would still cover the period between 9am - 9am on the date of publication but deaths would refer to the 24 hour period before 5pm on the previous day. This means that with <a href="https://www.gov.uk/guidance/coronavirus-covid-19-information-for-the-public#number-of-cases" target="_blank">a 2pm publication</a> there is a 5 hour lag between the recording and publication of confirmed cases but a 21 hour lag for deaths.</p>
  <ul>
