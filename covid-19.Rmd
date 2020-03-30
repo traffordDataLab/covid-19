@@ -111,7 +111,6 @@ output$cases_plot <- renderPlotly({
   p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases), "</b> cases<br>", format(DateVal, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_line(colour = "#57AACB", size = 0.5) +
-    geom_point(shape = 21, colour = "white", fill = "#57AACB", size = 2.5) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
     theme_minimal() +
@@ -223,7 +222,6 @@ fillCol(flex = c(NA, 1),
 output$deaths_plot <- renderPlotly({
   p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
     geom_line(colour = "#57AACB", size = 0.5) +
-    geom_point(shape = 21, colour = "white", fill = "#57AACB", size = 2.5) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
     theme_minimal() +
