@@ -1,4 +1,4 @@
-# COVID-19 monitor
+# COVID-19 UK monitor
 [R](https://cran.r-project.org) [Shiny](https://cran.r-project.org/web/packages/shiny/index.html) dashboard showing daily confirmed coronavirus cases and deaths in the UK.    
 
 <img src="screenshot.png" width="50%"> 
