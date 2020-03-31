@@ -1,5 +1,5 @@
 ---
-title: "COVID-19 monitor"
+title: "COVID-19 UK monitor"
 output: 
   flexdashboard::flex_dashboard:
     theme: lumen
