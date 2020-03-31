@@ -53,10 +53,9 @@ cases_by_area <- st_read("data/areas.geojson") %>%
 # Time series of daily confirmed deaths in the UK
 # URL: https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx
 daily_deaths <- read_csv("https://github.com/traffordDataLab/covid-19/raw/master/data/daily_deaths.csv", col_types = cols(
-  Date = col_date(NULL),
+  Date = col_date(format = "%Y-%m-%d"),
   NewDeaths = col_integer(),
-  CumDeaths = col_integer())) %>% 
-  mutate(Date = as.Date(Date, format = "%d/%m/%Y"))
+  CumDeaths = col_integer()))
 ```
 
 Cases 
@@ -222,8 +221,7 @@ output$deaths_plot <- renderPlotly({
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
-      expand_limits(y = c(0, max(daily_deaths$CumDeaths)*1.01))
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
   
   if (input$deaths_scale == "Linear") {
     p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
