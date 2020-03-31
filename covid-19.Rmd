@@ -12,7 +12,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales) ; library(classInt) ; library(plotly)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales) ; library(classInt) ; library(plotly) ; library(DT) 
 
 # Data published by Public Health England 
 # https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases
@@ -63,7 +63,7 @@ Cases
 =======================================================================
 
 Row
------------------------------------------------------------------------
+-------------------------------------
 
 ### <strong>New confirmed UK cases</strong><br/><small>as of `r format(daily_indicators$DateVal, '%d %B %Y')`</small>
 ```{r}
@@ -75,7 +75,7 @@ valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount))
 valueBox(comma(max(daily_cases$CumCases)))
 ```
 
-Row {.tabset .tabset-fade}
+Row
 -------------------------------------
 
 ### Daily confirmed cases
@@ -99,6 +99,9 @@ renderPlotly({
     layout(yaxis = list(fixedrange = TRUE))  
 })
 ```
+
+Row {data-width=400}
+-------------------------------------
 
 ### Cumulative confirmed cases
 ```{r}
@@ -131,6 +134,136 @@ output$cases_plot <- renderPlotly({
     layout(yaxis = list(fixedrange = TRUE)) 
 })
 ```
+
+###
+```{r}
+renderDT({
+  daily_cases %>% 
+    select(1:3) %>% 
+    mutate(CMODateCount = comma(CMODateCount),
+           CumCases = comma(CumCases)) %>% 
+    arrange(desc(DateVal)) %>% 
+    datatable(extensions = 'Scroller',
+              style = 'bootstrap', 
+              class = 'table-bordered',
+              fillContainer = FALSE,
+              width = "100%",
+              rownames = FALSE,
+              options = list(
+                dom = 't',
+                ordering = F,
+                scrollX = TRUE,
+                scrollY = 280,
+                scroller = TRUE,
+                columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+              colnames = c("Date", "New cases", "Total cases"))
+})
+
+
+```
+
+Deaths 
+=======================================================================
+
+Row
+-------------------------------------
+
+### <strong>New confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
+```{r}
+valueBox(comma(pull(filter(daily_deaths, Date == max(Date)), NewDeaths)))
+```
+
+### <strong>Total confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
+```{r}
+valueBox(comma(max(daily_deaths$CumDeaths)))
+```
+
+Row
+-------------------------------------
+
+### Daily confirmed deaths
+```{r}
+renderPlotly({
+  p <- ggplot(daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
+    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
+    geom_col(fill = "#57AACB") +
+    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    theme_minimal() +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
+  
+  ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) 
+})
+```
+
+Row {data-width=400}
+-------------------------------------
+
+### Cumulative confirmed deaths
+```{r}
+fillCol(flex = c(NA, 1),
+        radioButtons("deaths_scale", label = NULL, choices = c("Linear", "Logarithmic"), selected = "Linear", inline = TRUE),
+        plotlyOutput("deaths_plot", height = "100%")
+        )
+
+output$deaths_plot <- renderPlotly({
+  p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
+    geom_line(colour = "#57AACB", size = 1) +
+    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    theme_minimal() +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
+      expand_limits(y = c(0, max(daily_deaths$CumDeaths)*1.01))
+  
+  if (input$deaths_scale == "Linear") {
+    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
+    } else {
+      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_log10(expand = c(0.005, 0.005))
+    }
+  
+  ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) 
+})
+```
+
+###
+```{r}
+renderDT({
+  daily_deaths %>% 
+    arrange(desc(Date)) %>% 
+        mutate(NewDeaths = comma(NewDeaths),
+               CumDeaths = comma(CumDeaths)) %>% 
+    datatable(extensions = 'Scroller',
+              style = 'bootstrap', 
+              class = 'table-bordered',
+              fillContainer = FALSE,
+              width = "100%",
+              rownames = FALSE,
+              options = list(
+                dom = 't',
+                ordering = F,
+                scrollX = TRUE,
+                scrollY = 280,
+                scroller = TRUE,
+                columnDefs = list(list(className = 'dt-left', targets = "_all"))),
+              colnames = c("Date", "New deaths", "Total deaths"))
+})
+```
+
+Map
+=======================================================================
 
 ### Confirmed cases by area
 ```{r}
@@ -165,79 +298,6 @@ renderLeaflet({
     onRender(
       "function(el, t) {var myMap = this;myMap._container.style['background'] = '#ffffff';}",
       paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
-})
-```
-
-Deaths 
-=======================================================================
-
-Row
--------------------------------------
-
-### <strong>New confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
-```{r}
-valueBox(comma(pull(filter(daily_deaths, Date == max(Date)), NewDeaths)))
-```
-
-### <strong>Total confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
-```{r}
-valueBox(comma(max(daily_deaths$CumDeaths)))
-```
-
-Row {.tabset .tabset-fade}
--------------------------------------
-
-### Daily confirmed deaths
-```{r}
-renderPlotly({
-  p <- ggplot(daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(fill = "#57AACB") +
-    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
-  
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) 
-})
-```
-
-### Cumulative confirmed deaths
-```{r}
-fillCol(flex = c(NA, 1),
-        radioButtons("deaths_scale", label = NULL, choices = c("Linear", "Logarithmic"), selected = "Linear", inline = TRUE),
-        plotlyOutput("deaths_plot", height = "100%")
-        )
-
-output$deaths_plot <- renderPlotly({
-  p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
-    geom_line(colour = "#57AACB", size = 1) +
-    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) +
-      expand_limits(y = c(0, max(daily_deaths$CumDeaths)*1.01))
-  
-  if (input$deaths_scale == "Linear") {
-    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
-    } else {
-      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_log10(expand = c(0.005, 0.005))
-    }
-  
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) 
 })
 ```
 
