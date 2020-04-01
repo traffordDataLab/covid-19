@@ -99,9 +99,6 @@ renderPlotly({
 })
 ```
 
-Row
--------------------------------------
-
 ### Cumulative confirmed cases
 ```{r}
 fillCol(flex = c(NA, 1),
@@ -174,9 +171,6 @@ renderPlotly({
     layout(yaxis = list(fixedrange = TRUE)) 
 })
 ```
-
-Row
--------------------------------------
 
 ### Cumulative confirmed deaths
 ```{r}
