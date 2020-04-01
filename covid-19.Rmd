@@ -253,7 +253,7 @@ About {data-icon="fa-info-circle"}
   <ul>
     <li>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms are not being tested</li>
     <li>The number of confirmed deaths only includes those who have died in hospital</li>
-    <li>The date refers to the date of <em>reporting</em> not necessarily the date that of confirmed cases or deaths</li>
+    <li>The date refers to the date of <em>reporting</em> not necessarily the date of confirmed cases or deaths</li>
   </ul>
 <strong>Data sources</strong>
 <p>As of 25 March 2020, the reporting period for UK COVID-19 deaths  <a href="https://twitter.com/DHSCgovuk/status/1243237211119800323" target="_blank">changed</a>. Confirmed cases would still cover the period between 9am - 9am on the date of publication but deaths would refer to the 24 hour period before 5pm on the previous day. This means that with <a href="https://www.gov.uk/guidance/coronavirus-covid-19-information-for-the-public#number-of-cases" target="_blank">a 2pm publication</a> there is a 5 hour lag between the recording and publication of confirmed cases but a 21 hour lag for deaths.</p>
@@ -262,6 +262,20 @@ About {data-icon="fa-info-circle"}
     <li><a href="https://www.arcgis.com/home/item.html?id=e5fd11150d274bebaaf8fe2a7a2bda11" target="_blank">Time series of daily confirmed cases in the UK</a></li>
     <li><a href="https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6" target="_blank">Total confirmed cases by Upper Tier Local Authority in England</a></li>
  </ul>
+<strong>Other resources</strong><br/>
+<p><em>International data</em><br/>
+ <ul>
+    <li><a href="https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide" target="_blank">European Centre for Disease Prevention and Control (ECDC)</a></li>
+    <li><a href="https://github.com/CSSEGISandData/COVID-19" target="_blank">Johns Hopkins University CSSE</a></li>
+ </ul>
+<p><em>Visualisations and analyses</em><br/>
+ <ul>
+    <li><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/conditionsanddiseases" target="_blank">Office for National Statistics</a></li>
+    <li><a href="https://www.ft.com/coronavirus-latest" target="_blank">Financial Times</a></li>
+    <li><a href="https://ourworldindata.org/coronavirus" target="_blank">Our World in Data</a></li>
+    <li><a href="https://www.bbc.co.uk/news/uk-51768274" target="_blank">BBC</a></li>
+ </ul>
 <strong>Credits</strong>
+ </ul>
 <p>This application was built in <a href="https://cran.r-project.org" target="_blank">R</a> using the <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">shiny</a>, <a href="https://cran.r-project.org/web/packages/flexdashboard/index.html" target="_blank">flexdashboard</a>, <a href="https://cran.r-project.org/web/packages/ggplot2/index.html" target="_blank">ggplot2</a>, <a href="https://cran.r-project.org/web/packages/plotly/index.html" target="_blank">plotly</a> and <a href="https://cran.r-project.org/web/packages/leaflet/index.html" target="_blank">leaflet</a> packages.</p>
 </div>
