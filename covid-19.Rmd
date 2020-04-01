@@ -12,7 +12,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(DT) ; library(scales) ; library(classInt) ; library(plotly) ; library(DT) 
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(scales) ; library(classInt) ; library(plotly) 
 
 # Data published by Public Health England 
 # https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases
@@ -99,7 +99,7 @@ renderPlotly({
 })
 ```
 
-Row {data-width=400}
+Row
 -------------------------------------
 
 ### Cumulative confirmed cases
@@ -132,33 +132,6 @@ output$cases_plot <- renderPlotly({
     layout(xaxis = list(fixedrange = TRUE)) %>%
     layout(yaxis = list(fixedrange = TRUE)) 
 })
-```
-
-### Confirmed cases by date
-```{r}
-renderDT({
-  daily_cases %>% 
-    select(1:3) %>% 
-    mutate(CMODateCount = comma(CMODateCount),
-           CumCases = comma(CumCases)) %>% 
-    arrange(desc(DateVal)) %>% 
-    datatable(extensions = 'Scroller',
-              style = 'bootstrap', 
-              class = 'table-bordered',
-              fillContainer = FALSE,
-              width = "100%",
-              rownames = FALSE,
-              options = list(
-                dom = 't',
-                ordering = F,
-                scrollX = TRUE,
-                scrollY = 280,
-                scroller = TRUE,
-                columnDefs = list(list(className = 'dt-left', targets = "_all"))),
-              colnames = c("Date", "New cases", "Total cases"))
-})
-
-
 ```
 
 Deaths 
@@ -202,7 +175,7 @@ renderPlotly({
 })
 ```
 
-Row {data-width=400}
+Row
 -------------------------------------
 
 ### Cumulative confirmed deaths
@@ -233,30 +206,6 @@ output$deaths_plot <- renderPlotly({
     config(displayModeBar = FALSE) %>% 
     layout(xaxis = list(fixedrange = TRUE)) %>%
     layout(yaxis = list(fixedrange = TRUE)) 
-})
-```
-
-### Confirmed deaths by date
-```{r}
-renderDT({
-  daily_deaths %>% 
-    arrange(desc(Date)) %>% 
-        mutate(NewDeaths = comma(NewDeaths),
-               CumDeaths = comma(CumDeaths)) %>% 
-    datatable(extensions = 'Scroller',
-              style = 'bootstrap', 
-              class = 'table-bordered',
-              fillContainer = FALSE,
-              width = "100%",
-              rownames = FALSE,
-              options = list(
-                dom = 't',
-                ordering = F,
-                scrollX = TRUE,
-                scrollY = 280,
-                scroller = TRUE,
-                columnDefs = list(list(className = 'dt-left', targets = "_all"))),
-              colnames = c("Date", "New deaths", "Total deaths"))
 })
 ```
 
