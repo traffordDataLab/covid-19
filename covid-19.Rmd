@@ -109,57 +109,29 @@ fillCol(flex = c(NA, 1),
         )
 
 output$cases_plot <- renderPlotly({
+  p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
+    geom_line(colour = "#57AACB", size = 1) +
+    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
+    theme_minimal() +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank())
   
   if (input$cases_scale == "Linear") {
     
-    p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
-      geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-      geom_line(colour = "#57AACB", size = 1) +
-      scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-      scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-      labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-      theme_minimal() +
-      theme(plot.margin = unit(rep(0.5, 4), "cm"),
-            panel.grid.major.x = element_blank(),
-            panel.grid.minor = element_blank())
-    
-    ggplotly(p, tooltip = "text") %>%
-      config(displayModeBar = FALSE) %>% 
-      layout(xaxis = list(fixedrange = TRUE)) %>%
-      layout(yaxis = list(fixedrange = TRUE)) 
+    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
     
     } else {
       
-      temp <- daily_cases %>% 
-        arrange(DateVal) %>% 
-        filter(CumCases > 0) %>%
-        mutate(days = as.integer(DateVal - min(DateVal)),
-               doubling_2_day = 1*(1+((2^(1/2))-1))^(days),
-               doubling_3_day = 1*(1+((2^(1/3))-1))^(days),
-               doubling_1_week = 1*(1+((2^(1/7))-1))^(days))
-      
-      p <- ggplot(temp, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
-        geom_hline(yintercept = 1, size = 0.3, colour = "#333333") +
-        geom_line(colour = "#57AACB", size = 1) +
-        scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
-        geom_line(aes(x = DateVal, y = doubling_2_day), colour = "#bdbdbd", lty = 3) +
-        geom_line(aes(x = DateVal, y = doubling_3_day), colour = "#bdbdbd", lty = 2) +
-        geom_line(aes(x = DateVal, y = doubling_1_week), colour = "#bdbdbd", lty = 4) +
-        labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-        theme_minimal() +
-        theme(plot.margin = unit(rep(0.5, 4), "cm"),
-              panel.grid.major.x = element_blank(),
-              panel.grid.minor = element_blank())
-      
-      ggplotly(p, tooltip = "text") %>%
-        config(displayModeBar = FALSE) %>% 
-        layout(xaxis = list(fixedrange = TRUE)) %>%
-        layout(yaxis = list(fixedrange = TRUE)) %>%
-        style(text = "Doubling every 2 days", traces = 3) %>%
-        style(text = "Doubling every 3 days", traces = 4) %>% 
-        style(text = "Doubling every week", traces = 5)
+      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1))
       
     }
+  
+  ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) 
   
 })
 ```
