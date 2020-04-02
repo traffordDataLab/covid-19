@@ -77,7 +77,7 @@ valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount))
 valueBox(comma(max(daily_cases$CumCases)))
 ```
 
-Row
+Row {data-height=800}
 -------------------------------------
 
 ### Daily confirmed cases
@@ -136,6 +136,12 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
+Row {data-height=80}
+-------------------------------------
+
+### Please note
+The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms of coronavirus are not being tested.
+
 Deaths 
 =======================================================================
 
@@ -152,7 +158,7 @@ valueBox(comma(pull(filter(daily_deaths, Date == max(Date)), NewDeaths)))
 valueBox(comma(max(daily_deaths$CumDeaths)))
 ```
 
-Row
+Row {data-height=800}
 -------------------------------------
 
 ### Daily confirmed deaths
@@ -240,6 +246,12 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
+Row {data-height=80}
+-------------------------------------
+
+### Please note
+The number of deaths only includes patients who died in a UK hospital and tested positive for coronavirus.
+
 Map
 =======================================================================
 
@@ -287,12 +299,6 @@ About {data-icon="fa-info-circle"}
 <div class = "about">
 <h3>COVID-19 UK monitor</h3>
 <p>This dashboard visualises daily confirmed coronavirus cases and deaths in the UK published by <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
-<strong>Please note</strong>
-  <ul>
-    <li>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms are not being tested</li>
-    <li>The number of confirmed deaths only includes those who have died in hospital</li>
-    <li>The date refers to the date of <em>reporting</em> not necessarily the date of confirmed cases or deaths</li>
-  </ul>
 <strong>Data sources</strong>
 <p>As of 25 March 2020, the reporting period for UK COVID-19 deaths  <a href="https://twitter.com/DHSCgovuk/status/1243237211119800323" target="_blank">changed</a>. Confirmed cases would still cover the period between 9am - 9am on the date of publication but deaths would refer to the 24 hour period before 5pm on the previous day. This means that with <a href="https://www.gov.uk/guidance/coronavirus-covid-19-information-for-the-public#number-of-cases" target="_blank">a 2pm publication</a> there is a 5 hour lag between the recording and publication of confirmed cases but a 21 hour lag for deaths.</p>
  <ul>
