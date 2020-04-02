@@ -4,6 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     theme: lumen
     orientation: rows
+    vertical_layout: fill
     logo: logo.png
     source_code: https://github.com/traffordDataLab/covid-19
     social: ["twitter"]
@@ -35,7 +36,9 @@ cases_by_country <- tibble(
 url <- "https://www.arcgis.com/sharing/rest/content/items/e5fd11150d274bebaaf8fe2a7a2bda11/data"
 GET(url, write_disk(tmp <- tempfile(fileext = ".xlsx")))
 daily_cases <- read_xlsx(tmp) %>% 
-  mutate(DateVal = as.Date(DateVal, format = "%d/%m/%y"))
+  mutate(DateVal = as.Date(DateVal, format = "%d/%m/%y"),
+         CMODateCount = as.integer(CMODateCount),
+         CumCases = as.integer(CumCases))
 
 # Total confirmed cases by Upper Tier Local Authority in England
 # URL: https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6
@@ -80,17 +83,16 @@ Row
 ### Daily confirmed cases
 ```{r}
 renderPlotly({
-  p <- ggplot(daily_cases, aes(x = DateVal, y = CMODateCount, text = paste0("<b>", comma(CMODateCount), "</b> cases<br>", format(DateVal, "%d %B")))) +
+  p <- ggplot(daily_cases, aes(x = DateVal, y = CMODateCount, text = paste0("<b>", comma(CMODateCount, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_col(fill = "#57AACB") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
     theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
+          panel.grid.minor = element_blank()) 
   
   ggplotly(p, tooltip = "text") %>%
     config(displayModeBar = FALSE) %>% 
@@ -107,27 +109,58 @@ fillCol(flex = c(NA, 1),
         )
 
 output$cases_plot <- renderPlotly({
-  p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases), "</b> cases<br>", format(DateVal, "%d %B")))) +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_line(colour = "#57AACB", size = 1) +
-    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
   
-    if (input$cases_scale == "Linear") {
-    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
+  if (input$cases_scale == "Linear") {
+    
+    p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
+      geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
+      geom_line(colour = "#57AACB", size = 1) +
+      scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
+      scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+      labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
+      theme_minimal() +
+      theme(plot.margin = unit(rep(0.5, 4), "cm"),
+            panel.grid.major.x = element_blank(),
+            panel.grid.minor = element_blank())
+    
+    ggplotly(p, tooltip = "text") %>%
+      config(displayModeBar = FALSE) %>% 
+      layout(xaxis = list(fixedrange = TRUE)) %>%
+      layout(yaxis = list(fixedrange = TRUE)) 
+    
     } else {
-      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1))
+      
+      temp <- daily_cases %>% 
+        arrange(DateVal) %>% 
+        filter(CumCases > 0) %>%
+        mutate(days = as.integer(DateVal - min(DateVal)),
+               doubling_2_day = 1*(1+((2^(1/2))-1))^(days),
+               doubling_3_day = 1*(1+((2^(1/3))-1))^(days),
+               doubling_1_week = 1*(1+((2^(1/7))-1))^(days))
+      
+      p <- ggplot(temp, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
+        geom_hline(yintercept = 1, size = 0.3, colour = "#333333") +
+        geom_line(colour = "#57AACB", size = 1) +
+        scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
+        geom_line(aes(x = DateVal, y = doubling_2_day), colour = "#bdbdbd", lty = 3) +
+        geom_line(aes(x = DateVal, y = doubling_3_day), colour = "#bdbdbd", lty = 2) +
+        geom_line(aes(x = DateVal, y = doubling_1_week), colour = "#bdbdbd", lty = 4) +
+        labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
+        theme_minimal() +
+        theme(plot.margin = unit(rep(0.5, 4), "cm"),
+              panel.grid.major.x = element_blank(),
+              panel.grid.minor = element_blank())
+      
+      ggplotly(p, tooltip = "text") %>%
+        config(displayModeBar = FALSE) %>% 
+        layout(xaxis = list(fixedrange = TRUE)) %>%
+        layout(yaxis = list(fixedrange = TRUE)) %>%
+        style(text = "Doubling every 2 days", traces = 3) %>%
+        style(text = "Doubling every 3 days", traces = 4) %>% 
+        style(text = "Doubling every week", traces = 5)
+      
     }
   
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) 
 })
 ```
 
@@ -153,17 +186,16 @@ Row
 ### Daily confirmed deaths
 ```{r}
 renderPlotly({
-  p <- ggplot(daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
+  p <- ggplot(daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_col(fill = "#57AACB") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
     theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15))) 
+          panel.grid.minor = element_blank()) 
   
   ggplotly(p, tooltip = "text") %>%
     config(displayModeBar = FALSE) %>% 
@@ -180,26 +212,59 @@ fillCol(flex = c(NA, 1),
         )
 
 output$deaths_plot <- renderPlotly({
-  p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths), "</b> deaths<br>", format(Date, "%d %B")))) +
+  if (input$deaths_scale == "Linear") {
+    
+    p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
+    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +  
     geom_line(colour = "#57AACB", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = "Source: Public Health England") +
+    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
     theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.caption = element_text(size = 10, color = "grey50", hjust = 1, margin = margin(t = 15)))
-  
-  if (input$deaths_scale == "Linear") {
-    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
+          panel.grid.minor = element_blank())
+    
+    ggplotly(p, tooltip = "text") %>%
+      config(displayModeBar = FALSE) %>% 
+      layout(xaxis = list(fixedrange = TRUE)) %>%
+      layout(yaxis = list(fixedrange = TRUE)) 
+    
     } else {
-      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1))
+      
+      temp <- daily_deaths %>% 
+        arrange(Date) %>% 
+        filter(CumDeaths > 0) %>%
+        mutate(days = as.integer(Date - min(Date)),
+               doubling_2_day = 1*(1+((2^(1/2))-1))^(days),
+               doubling_3_day = 1*(1+((2^(1/3))-1))^(days),
+               doubling_1_week = 1*(1+((2^(1/7))-1))^(days))
+      
+      p <- ggplot(temp, aes(x = Date, y = CumDeaths, group = 1, 
+                          text = paste0("<b>", comma(CumDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
+        geom_hline(yintercept = 1, size = 0.3, colour = "#333333") +
+        geom_line(colour = "#57AACB", size = 1) +
+        scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
+        scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
+        geom_line(aes(x = Date, y = doubling_2_day), colour = "#bdbdbd", lty = 3) +
+        geom_line(aes(x = Date, y = doubling_3_day), colour = "#bdbdbd", lty = 2) +
+        geom_line(aes(x = Date, y = doubling_1_week), colour = "#bdbdbd", lty = 4) +
+        labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
+        theme_minimal() +
+        theme(plot.margin = unit(rep(0.5, 4), "cm"),
+              panel.grid.major.x = element_blank(),
+              panel.grid.minor = element_blank())
+      
+      ggplotly(p, tooltip = "text") %>%
+        config(displayModeBar = FALSE) %>% 
+        layout(xaxis = list(fixedrange = TRUE)) %>%
+        layout(yaxis = list(fixedrange = TRUE)) %>%
+        style(text = "Doubling every 2 days", traces = 3) %>%
+        style(text = "Doubling every 3 days", traces = 4) %>% 
+        style(text = "Doubling every week", traces = 5)
+      
     }
-  
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) 
+
 })
 ```
 
@@ -248,6 +313,7 @@ About {data-icon="fa-info-circle"}
 ### 
 
 <div class = "about">
+<h3>COVID-19 UK monitor</h3>
 <p>This dashboard visualises daily confirmed coronavirus cases and deaths in the UK published by <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>. Further information about Coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
 <strong>Please note</strong>
   <ul>
