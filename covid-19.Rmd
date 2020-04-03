@@ -93,11 +93,12 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-Row {data-height=80}
+Row {data-height=120}
 -------------------------------------
 
 ### *Please note*
-The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms of coronavirus are not being tested.
+- Confirmed cases are recorded up to 9am on `r format(daily_indicators$DateVal, '%d %B %Y')`.    
+- The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms of coronavirus are not being tested.
 
 Deaths 
 =======================================================================
@@ -203,11 +204,12 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
-Row {data-height=80}
+Row {data-height=120}
 -------------------------------------
 
 ### *Please note*
-The number of deaths only includes patients who died in a UK hospital and tested positive for coronavirus.
+- Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`.    
+- The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital.    
 
 Map
 =======================================================================
@@ -236,7 +238,7 @@ renderLeaflet({
 ```{r}
 renderLeaflet({
   breaks <- classIntervals(cases_by_area$rate, n = 5, style = "jenks")$brks
-  pal <- colorBin(palette = "Blues", domain = NULL, bins = breaks, na.color = "#FFFFFF")
+  pal <- colorBin(palette = c("#dceef8","#b5d1e1","#8eb6ca","#669ab4","#39809e"), domain = NULL, bins = breaks, na.color = "#FFFFFF")
   
   leaflet(data = cases_by_area) %>%
     setView(-3, 54.3, zoom = 6) %>% 
