@@ -34,7 +34,7 @@ valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount))
 valueBox(comma(max(daily_cases$CumCases)), color = "#39809E")
 ```
 
-Row {data-height=800}
+Row
 -------------------------------------
 
 ### Daily confirmed cases
@@ -97,7 +97,8 @@ Row {data-height=120}
 -------------------------------------
 
 ### *Please note*
-- Confirmed cases are recorded up to 9am on `r format(daily_indicators$DateVal, '%d %B %Y')`.    
+- Confirmed cases are recorded up to 9am on `r format(daily_indicators$DateVal, '%d %B %Y')`.     
+- The date of a case refers to the day the results of a test were confirmed not the day the test was performed.    
 - The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms of coronavirus are not being tested.
 
 Deaths 
@@ -116,7 +117,7 @@ valueBox(comma(pull(filter(daily_deaths, Date == max(Date)), NewDeaths)), color 
 valueBox(comma(max(daily_deaths$CumDeaths)), color = "#8D2313")
 ```
 
-Row {data-height=800}
+Row
 -------------------------------------
 
 ### Daily confirmed deaths
@@ -208,8 +209,9 @@ Row {data-height=120}
 -------------------------------------
 
 ### *Please note*
-- Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`.    
-- The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital.    
+- Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`.     
+- The date of a death refers to the day the death was reported not the actual date of the death.       
+- The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales" target="_blank">Office for National Statistics</a> on a weekly basis.
 
 Map
 =======================================================================
