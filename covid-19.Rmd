@@ -13,7 +13,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(scales) ; library(classInt) ; library(plotly) 
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(scales) ; library(classInt) ; library(plotly)
 
 source("load_data.R")
 ```
@@ -58,6 +58,8 @@ renderPlotly({
 })
 ```
 
+> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(daily_indicators$DateVal, '%d %B %Y')`. 2) The date of a case refers to the day the results of a test were confirmed not the day the test was performed. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=e5fd11150d274bebaaf8fe2a7a2bda11)
+ 
 ### Cumulative confirmed cases
 ```{r}
 fillCol(flex = c(NA, 1),
@@ -93,13 +95,7 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-Row {data-height=120}
--------------------------------------
-
-### *Please note*
-- Confirmed cases are recorded up to 9am on `r format(daily_indicators$DateVal, '%d %B %Y')`.     
-- The date of a case refers to the day the results of a test were confirmed not the day the test was performed.    
-- The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people who report symptoms of coronavirus are not being tested.
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=e5fd11150d274bebaaf8fe2a7a2bda11)
 
 Deaths 
 =======================================================================
@@ -140,6 +136,8 @@ renderPlotly({
     layout(yaxis = list(fixedrange = TRUE)) 
 })
 ```
+
+> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [Public Health England](https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx)
 
 ### Cumulative confirmed deaths
 ```{r}
@@ -205,18 +203,12 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
-Row {data-height=120}
--------------------------------------
-
-### *Please note*
-- Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`.     
-- The date of a death refers to the day the death was reported not the actual date of the death.       
-- The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales" target="_blank">Office for National Statistics</a> on a weekly basis.
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Public Health England](https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx)
 
 Map
 =======================================================================
 
-Row {data-height=900}
+Row
 -------------------------------------
 
 ### Confirmed cases
@@ -235,6 +227,8 @@ renderLeaflet({
     paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
 })
 ```
+
+> <br/>**Notes**: City of London cases are combined with Hackney and those confirmed in Cornwall are combined with the Isles of Scilly.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6)
 
 ### Infection rate
 ```{r}
@@ -255,41 +249,94 @@ renderLeaflet({
 })
 ```
 
-Row {data-height=80}
+> <br/>**Notes**: [Mid-2018 population estimates](https://www.nomisweb.co.uk/query/construct/summary.asp?mode=construct&version=0&dataset=2002) published by the [Office for National Statistics](https://www.ons.gov.uk/) are used as the denominator to calculate a rate of infection per 100,000 residents.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6)
+
+International 
+=======================================================================
+
+Row
 -------------------------------------
 
-### *Please note*
-City of London cases are combined with Hackney and those confirmed in Cornwall are combined with the Isles of Scilly.
+### Cumulative number of deaths
+```{r}
+renderPlotly({
+  p <- ggplot(global_deaths, aes(x = days, y = total_deaths, color = countriesAndTerritories, label = countriesAndTerritories, group = countriesAndTerritories, text = paste0("<b>", countriesAndTerritories, "</b><br><b>", days, "</b> days", "</br><b>", comma(total_deaths), "</b> deaths"))) + 
+    geom_hline(yintercept = 100, size = 0.3, colour = "#333333") +
+    geom_line(size = 0.6) + 
+    geom_text(data = global_deaths %>% group_by(countriesAndTerritories) %>% filter(days == max(days)) %>% ungroup(), aes(x = days, y = total_deaths), nudge_x = 0.3, nudge_y = 0.03, fontface = "bold", check_overlap = TRUE) +
+    scale_colour_manual(values = c("China" = "#E58606", "France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "South_Korea" = "#DAA51B", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A", "USA" = "#CC3A8E")) +
+    scale_x_continuous(expand = expansion(add = c(0,1))) +
+    scale_y_continuous(trans = "log10", breaks = c(100, 200, 500, 1000, 2000, 5000, 10000, 20000), limits = c(100,20000), expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
+    labs(x = "Days since 100th death", y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
+    theme_minimal() +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.minor = element_blank()) +
+    guides(colour = FALSE)
+  
+  p <- ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>%
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) %>% 
+    hide_legend()
+  
+  p$x$data[[12]]$hoverinfo <- "none"
+  p$x$data[[13]]$hoverinfo <- "none"
+  p$x$data[[14]]$hoverinfo <- "none"
+  p$x$data[[15]]$hoverinfo <- "none"
+  p$x$data[[16]]$hoverinfo <- "none"
+  p$x$data[[17]]$hoverinfo <- "none"
+  p$x$data[[18]]$hoverinfo <- "none"
+  p$x$data[[19]]$hoverinfo <- "none"
+  p$x$data[[20]]$hoverinfo <- "none"
+  p$x$data[[21]]$hoverinfo <- "none"
+  
+  p
+})
+```
+
+> <br/>**Notes**: The number of days for China have been truncated to better show the change in the rate of growth amongst other countries. The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+
+### COVID-19 Government Response Stringency Index
+```{r}
+renderPlotly({
+  p <- ggplot(stringency_index,  aes(x = date_value, y = stringency, colour = country, label = country, group = country, text = paste0("<b>", country, "</b><br><b>", date_value, "</b></br>Stringency Index: <b>", round(stringency,0), "</b>"))) +
+    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
+    geom_line(size = 0.8) +
+    geom_text(data = stringency_index %>% group_by(country) %>% filter(date_value == max(date_value)) %>% ungroup(), aes(x = date_value, y = stringency), nudge_x = -2.5, nudge_y = 1.4, fontface = "bold", check_overlap = TRUE) +
+    scale_colour_manual(values = c("Germany" = "#CC61B0", "Italy" = "#99C945", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
+    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100)) +
+    labs(x = NULL, y = "Stringency Index (0 = no measures)", title = NULL, subtitle = NULL, caption = NULL) + 
+    theme_minimal() +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank()) +
+    guides(colour = FALSE)
+  
+  p <- ggplotly(p, tooltip = "text") %>%
+    config(displayModeBar = FALSE) %>% 
+    layout(xaxis = list(fixedrange = TRUE)) %>%
+    layout(yaxis = list(fixedrange = TRUE)) %>% 
+    hide_legend()
+  
+  p$x$data[[6]]$hoverinfo <- "none"
+  p$x$data[[7]]$hoverinfo <- "none"
+  p$x$data[[8]]$hoverinfo <- "none"
+  p$x$data[[9]]$hoverinfo <- "none"
+  p$x$data[[10]]$hoverinfo <- "none"
+  p
+
+})    
+```
+
+> <br/>**Notes**: The [Oxford COVID-19 Government Response Tracker (OxCGRT)](www.bsg.ox.ac.uk/covidtracker) compares government responses to the coronavirus pandemic by creating a composite index of different categories of response. A score of 0 on the Index indicates no measures have been taken.<br/>**Source**: [Blavatnik School of Government, Oxford University](https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker).
 
 About {data-icon="fa-info-circle"}
 =======================================================================
 
 ### 
 
-<div class = "about">
-<h3>COVID-19 UK monitor</h3>
-<p>This dashboard visualises daily confirmed coronavirus cases and deaths in the United Kingdom. Further information about coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
-<strong>Data sources</strong>
-<p>All of the data used in this dashboard derives from <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>.</p>
- <ul>
-    <li><a href="https://www.arcgis.com/home/item.html?id=bc8ee90225644ef7a6f4dd1b13ea1d67" target="_blank">Total confirmed cases for countries of the UK and total deaths in the UK</a></li>
-    <li><a href="https://www.arcgis.com/home/item.html?id=e5fd11150d274bebaaf8fe2a7a2bda11" target="_blank">Time series of daily confirmed cases in the UK</a></li>
-    <li><a href="https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6" target="_blank">Total confirmed cases by Upper Tier Local Authority in England</a></li>
- </ul>
-<strong>Other resources</strong><br/>
-<p><em>International data</em><br/>
- <ul>
-    <li><a href="https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide" target="_blank">European Centre for Disease Prevention and Control (ECDC)</a></li>
-    <li><a href="https://github.com/CSSEGISandData/COVID-19" target="_blank">Johns Hopkins University CSSE</a></li>
- </ul>
-<p><em>Visualisations and analyses</em><br/>
- <ul>
-    <li><a href="https://www.ons.gov.uk/peoplepopulationandcommunity/healthandsocialcare/conditionsanddiseases" target="_blank">Office for National Statistics</a></li>
-    <li><a href="https://www.ft.com/coronavirus-latest" target="_blank">Financial Times</a></li>
-    <li><a href="https://ourworldindata.org/coronavirus" target="_blank">Our World in Data</a></li>
-    <li><a href="https://www.bbc.co.uk/news/uk-51768274" target="_blank">BBC</a></li>
- </ul>
-<strong>Credits</strong>
- </ul>
-<p>This application was built in <a href="https://cran.r-project.org" target="_blank">R</a> using the <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">shiny</a>, <a href="https://cran.r-project.org/web/packages/flexdashboard/index.html" target="_blank">flexdashboard</a>, <a href="https://cran.r-project.org/web/packages/ggplot2/index.html" target="_blank">ggplot2</a>, <a href="https://cran.r-project.org/web/packages/plotly/index.html" target="_blank">plotly</a> and <a href="https://cran.r-project.org/web/packages/leaflet/index.html" target="_blank">leaflet</a> packages.</p>
-</div>
+```{r}
+includeHTML("about.html")
+```
+
