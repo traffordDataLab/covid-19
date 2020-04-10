@@ -13,7 +13,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(scales) ; library(classInt) ; library(plotly)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(scales) ; library(classInt) ; library(plotly) ; library(ggrepel)
 
 source("load_data.R")
 ```
@@ -298,33 +298,22 @@ renderPlotly({
 
 ### COVID-19 Government Response Stringency Index
 ```{r}
-renderPlotly({
-  p <- ggplot(stringency_index,  aes(x = date_value, y = stringency, colour = country, label = country, group = country, text = paste0("<b>", country, "</b><br><b>", date_value, "</b></br>Stringency Index: <b>", round(stringency,0), "</b>"))) +
+renderPlot({
+  ggplot(stringency_index,  aes(x = date_value, y = stringency, colour = country, label = country, group = country)) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_line(size = 0.8) +
-    geom_text(data = stringency_index %>% group_by(country) %>% filter(date_value == max(date_value)) %>% ungroup(), aes(x = date_value, y = stringency), nudge_x = -2.5, nudge_y = 1.4, fontface = "bold", check_overlap = TRUE) +
+    geom_text_repel(data = ungroup(filter(group_by(stringency_index, country), date_value == max(date_value))), aes(x = date_value, y = stringency), fontface = "bold", segment.color = NA, nudge_x = -2.5, nudge_y = 1.4) +
     scale_colour_manual(values = c("Germany" = "#CC61B0", "Italy" = "#99C945", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100)) +
     labs(x = NULL, y = "Stringency Index (0 = no measures)", title = NULL, subtitle = NULL, caption = NULL) + 
-    theme_minimal() +
+    theme_minimal(base_size = 16) +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank()) +
+          panel.grid.minor = element_blank(),
+          strip.text.x = element_blank(),
+          axis.text.x = element_text(angle = 90, hjust = 1)) +
     guides(colour = FALSE)
-  
-  p <- ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) %>% 
-    hide_legend()
-  
-  p$x$data[[6]]$hoverinfo <- "none"
-  p$x$data[[7]]$hoverinfo <- "none"
-  p$x$data[[8]]$hoverinfo <- "none"
-  p$x$data[[9]]$hoverinfo <- "none"
-  p$x$data[[10]]$hoverinfo <- "none"
-  p
 
 })    
 ```
