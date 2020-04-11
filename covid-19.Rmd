@@ -316,7 +316,7 @@ renderPlot({
     guides(colour = FALSE) +
     facet_wrap(~country, nrow = 1)
 
-})    
+}, execOnResize = TRUE)    
 ```
 
 > <br/>**Notes**: The [Oxford COVID-19 Government Response Tracker (OxCGRT)](www.bsg.ox.ac.uk/covidtracker) compares government responses to the coronavirus pandemic by creating a composite index of different categories of response. A score of 0 on the Index indicates no measures have been taken.<br/>**Source**: [Blavatnik School of Government, Oxford University](https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker).
