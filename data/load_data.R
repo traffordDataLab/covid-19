@@ -1,4 +1,4 @@
-library(tidyverse) ; library(httr) ; library(readxl) ; library(sf) ; library(jsonlite)
+library(tidyverse) ; library(httr) ; library(jsonlite)
 
 # -------------------------------------------
 # UK cases and deaths
@@ -19,20 +19,6 @@ daily_deaths <- read_csv("https://github.com/traffordDataLab/covid-19/raw/master
   Date = col_date(format = "%Y-%m-%d"),
   NewDeaths = col_integer(),
   CumDeaths = col_integer()))
-
-# Total confirmed cases by Upper Tier Local Authority in England
-# Source: Public Health England
-# URL: https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6
-# utla_cases <- read_csv("https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data") %>% 
-#   select(area_code = GSS_CD, TotalCases) %>% 
-#   bind_rows(cases_by_country)
-# 
-# cases_by_area <- st_read("data/areas.geojson") %>% 
-#   left_join(utla_cases, by = "area_code") %>%
-#   mutate(rate = round((TotalCases/population)*100000, 1),
-#          cases_popup = str_c("<strong>", area_name, "</strong><br/>", comma(TotalCases), " cases") %>% map(HTML),
-#          rate_popup = str_c("<strong>", area_name, "</strong><br/>", rate, " cases per 100,000 population") %>% map(HTML)) %>% 
-#   select(-geometry, everything())
 
 # -------------------------------------------
 # Deaths by selected country

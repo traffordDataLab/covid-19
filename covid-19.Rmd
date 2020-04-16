@@ -13,7 +13,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(scales) ; library(classInt) ; library(plotly) ; library(ggrepel)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(scales) ; library(plotly) ; library(ggrepel)
 
 source("data/load_data.R")
 ```
@@ -58,7 +58,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(daily_cases$Date), '%d %B %Y')`. 2) The date of a case refers to the day the results of a test were confirmed not the day the test was performed. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
+> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(daily_cases$Date), '%d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
  
 ### Cumulative confirmed cases
 ```{r}
