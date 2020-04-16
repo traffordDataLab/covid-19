@@ -58,7 +58,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(uk_data$Date), '%d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(uk_data$Date), '%d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
  
 ### Cumulative confirmed cases
 ```{r}
@@ -95,7 +95,7 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 Deaths 
 =======================================================================
@@ -137,7 +137,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### Cumulative confirmed deaths
 ```{r}
@@ -203,7 +203,7 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 International 
 =======================================================================
@@ -248,7 +248,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: The number of days for China have been truncated to better show the change in the rate of growth amongst other countries. The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> <br/>**Notes**: The number of days for China have been truncated to better show the change in the rate of growth amongst other countries. The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### COVID-19 Government Response Stringency Index
 ```{r}
