@@ -15,7 +15,7 @@ runtime: shiny
 ```{r setup, include=FALSE}
 library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(readxl) ;  library(sf) ;  library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(scales) ; library(classInt) ; library(plotly) ; library(ggrepel)
 
-source("load_data.R")
+source("data/load_data.R")
 ```
 
 Cases 
@@ -24,12 +24,12 @@ Cases
 Row
 -------------------------------------
 
-### <strong>New confirmed UK cases</strong><br/><small>as of `r format(daily_indicators$DateVal, '%d %B %Y')`</small>
+### <strong>New confirmed UK cases</strong><br/><small>as of `r format(max(daily_cases$Date), '%d %B %Y')`</small>
 ```{r}
-valueBox(comma(pull(filter(daily_cases, DateVal == max(DateVal)), CMODateCount)), color = "#39809E")
+valueBox(comma(pull(filter(daily_cases, Date == max(Date)), NewCases)), color = "#39809E")
 ```
 
-### <strong>Total confirmed UK cases</strong><br/><small>as of `r format(daily_indicators$DateVal, '%d %B %Y')`</small>
+### <strong>Total confirmed UK cases</strong><br/><small>as of `r format(max(daily_cases$Date), '%d %B %Y')`</small>
 ```{r}
 valueBox(comma(max(daily_cases$CumCases)), color = "#39809E")
 ```
@@ -40,7 +40,7 @@ Row
 ### Daily confirmed cases
 ```{r}
 renderPlotly({
-  p <- ggplot(daily_cases, aes(x = DateVal, y = CMODateCount, text = paste0("<b>", comma(CMODateCount, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
+  p <- ggplot(daily_cases, aes(x = Date, y = NewCases, text = paste0("<b>", comma(NewCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_col(fill = "#39809E") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
@@ -58,7 +58,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(daily_indicators$DateVal, '%d %B %Y')`. 2) The date of a case refers to the day the results of a test were confirmed not the day the test was performed. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=e5fd11150d274bebaaf8fe2a7a2bda11)
+> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(daily_cases$Date), '%d %B %Y')`. 2) The date of a case refers to the day the results of a test were confirmed not the day the test was performed. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
  
 ### Cumulative confirmed cases
 ```{r}
@@ -68,7 +68,7 @@ fillCol(flex = c(NA, 1),
         )
 
 output$cases_plot <- renderPlotly({
-  p <- ggplot(daily_cases, aes(x = DateVal, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(DateVal, "%d %B")))) +
+  p <- ggplot(daily_cases, aes(x = Date, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
     geom_line(colour = "#39809E", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
@@ -95,7 +95,7 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=e5fd11150d274bebaaf8fe2a7a2bda11)
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
 
 Deaths 
 =======================================================================
@@ -137,7 +137,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [Public Health England](https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx)
+> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
 
 ### Cumulative confirmed deaths
 ```{r}
@@ -182,8 +182,8 @@ output$deaths_plot <- renderPlotly({
         scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
         scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
         geom_line(aes(x = Date, y = doubling_2_day), colour = "#bdbdbd", lty = 3) +
-        geom_line(aes(x = Date, y = doubling_3_day), colour = "#bdbdbd", lty = 2) +
-        geom_line(aes(x = Date, y = doubling_1_week), colour = "#bdbdbd", lty = 4) +
+        geom_line(aes(x = Date, y = doubling_3_day), colour = "#bdbdbd", lty = 3) +
+        geom_line(aes(x = Date, y = doubling_1_week), colour = "#bdbdbd", lty = 3) +
         labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
         theme_minimal() +
         theme(plot.margin = unit(rep(0.5, 4), "cm"),
@@ -203,53 +203,7 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Public Health England](https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx)
-
-Map
-=======================================================================
-
-Row
--------------------------------------
-
-### Confirmed cases
-```{r}
-renderLeaflet({
-  leaflet() %>%
-    setView(-3, 54.3, zoom = 6) %>% 
-    addTiles(urlTemplate = "",
-           attribution = paste0('<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', ". Updated on ", format(daily_indicators$DateVal, '%d %B %Y'), "."), options = providerTileOptions(minZoom = 6, maxZoom = 10)) %>%
-    addPolygons(data = cases_by_area, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd") %>% 
-    addCircleMarkers(data = cases_by_area, lng = ~long, lat = ~lat, radius = ~sqrt(TotalCases), fillColor = "#39809E", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~cases_popup) %>%
-    addFullscreenControl() %>% 
-    addResetMapButton() %>% 
-    onRender(
-    "function(el, t) {var myMap = this;myMap._container.style['background'] = '#ffffff';}",
-    paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
-})
-```
-
-> <br/>**Notes**: City of London cases are combined with Hackney and those confirmed in Cornwall are combined with the Isles of Scilly.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6)
-
-### Infection rate
-```{r}
-renderLeaflet({
-  breaks <- classIntervals(cases_by_area$rate, n = 5, style = "jenks")$brks
-  pal <- colorBin(palette = c("#dceef8","#b5d1e1","#8eb6ca","#669ab4","#39809e"), domain = NULL, bins = breaks, na.color = "#FFFFFF")
-  
-  leaflet(data = cases_by_area) %>%
-    setView(-3, 54.3, zoom = 6) %>% 
-    addTiles(urlTemplate = "", attribution = paste0('<a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Source: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>', ". Updated on ", format(daily_indicators$DateVal, '%d %B %Y'), "."), options = providerTileOptions(minZoom = 6, maxZoom = 10)) %>%
-    addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 1, color = "#bdbdbd", opacity = 1, label = ~rate_popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "15px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
-    addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Cases per 100,000 population", position = "bottomright") %>% 
-    addFullscreenControl() %>% 
-    addResetMapButton() %>% 
-    onRender(
-      "function(el, t) {var myMap = this;myMap._container.style['background'] = '#ffffff';}",
-      paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
-})
-```
-
-> <br/>**Notes**: [Mid-2018 population estimates](https://www.nomisweb.co.uk/query/construct/summary.asp?mode=construct&version=0&dataset=2002) published by the [Office for National Statistics](https://www.ons.gov.uk/) are used as the denominator to calculate a rate of infection per 100,000 residents.<br/>**Source**: [Public Health England](https://www.arcgis.com/home/item.html?id=b684319181f94875a6879bbc833ca3a6)
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
 
 International 
 =======================================================================
@@ -301,7 +255,7 @@ renderPlotly({
 renderPlot({
   ggplot(stringency_index,  aes(x = date_value, y = stringency, colour = country, label = country, group = country)) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_line(size = 0.8) +
+    geom_line(size = 1) +
     geom_text_repel(data = ungroup(filter(group_by(stringency_index, country), date_value == max(date_value))), aes(x = date_value, y = stringency), fontface = "bold", segment.color = NA, nudge_y = 1.4) +
     scale_colour_manual(values = c("Germany" = "#CC61B0", "Italy" = "#99C945", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
