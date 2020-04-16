@@ -15,7 +15,7 @@ runtime: shiny
 ```{r setup, include=FALSE}
 library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(scales) ; library(plotly) ; library(ggrepel)
 
-source("data/load_data.R")
+source("load_data.R")
 ```
 
 Cases 
@@ -24,14 +24,14 @@ Cases
 Row
 -------------------------------------
 
-### <strong>New confirmed UK cases</strong><br/><small>as of `r format(max(daily_cases$Date), '%d %B %Y')`</small>
+### <strong>New confirmed UK cases</strong><br/><small>as of `r format(max(uk_data$Date), '%d %B %Y')`</small>
 ```{r}
-valueBox(comma(pull(filter(daily_cases, Date == max(Date)), NewCases)), color = "#39809E")
+valueBox(comma(pull(filter(uk_data, Date == max(Date)), NewCases)), color = "#39809E")
 ```
 
-### <strong>Total confirmed UK cases</strong><br/><small>as of `r format(max(daily_cases$Date), '%d %B %Y')`</small>
+### <strong>Total confirmed UK cases</strong><br/><small>as of `r format(max(uk_data$Date), '%d %B %Y')`</small>
 ```{r}
-valueBox(comma(max(daily_cases$CumCases)), color = "#39809E")
+valueBox(comma(max(uk_data$CumCases)), color = "#39809E")
 ```
 
 Row
@@ -40,7 +40,7 @@ Row
 ### Daily confirmed cases
 ```{r}
 renderPlotly({
-  p <- ggplot(daily_cases, aes(x = Date, y = NewCases, text = paste0("<b>", comma(NewCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
+  p <- ggplot(uk_data, aes(x = Date, y = NewCases, text = paste0("<b>", comma(NewCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_col(fill = "#39809E") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
@@ -58,7 +58,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(daily_cases$Date), '%d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
+> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(uk_data$Date), '%d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are not being tested.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
  
 ### Cumulative confirmed cases
 ```{r}
@@ -68,7 +68,7 @@ fillCol(flex = c(NA, 1),
         )
 
 output$cases_plot <- renderPlotly({
-  p <- ggplot(daily_cases, aes(x = Date, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
+  p <- ggplot(uk_data, aes(x = Date, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
     geom_line(colour = "#39809E", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
@@ -95,7 +95,7 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 Deaths 
 =======================================================================
@@ -103,14 +103,14 @@ Deaths
 Row
 -------------------------------------
 
-### <strong>New confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
+### <strong>New confirmed UK deaths</strong><br/><small>as of `r format(max(uk_data$Date), '%d %B %Y')`</small>
 ```{r}
-valueBox(comma(pull(filter(daily_deaths, Date == max(Date)), NewDeaths)), color = "#8D2313")
+valueBox(comma(pull(filter(uk_data, Date == max(Date)), NewDeaths)), color = "#8D2313")
 ```
 
-### <strong>Total confirmed UK deaths</strong><br/><small>as of `r format(max(daily_deaths$Date), '%d %B %Y')`</small>
+### <strong>Total confirmed UK deaths</strong><br/><small>as of `r format(max(uk_data$Date), '%d %B %Y')`</small>
 ```{r}
-valueBox(comma(max(daily_deaths$CumDeaths)), color = "#8D2313")
+valueBox(comma(max(uk_data$CumDeaths)), color = "#8D2313")
 ```
 
 Row
@@ -119,7 +119,7 @@ Row
 ### Daily confirmed deaths
 ```{r}
 renderPlotly({
-  p <- ggplot(daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
+  p <- ggplot(filter(uk_data, Date >= "2020-03-06"), aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_col(fill = "#8D2313") +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
@@ -137,7 +137,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(daily_deaths$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
+> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### Cumulative confirmed deaths
 ```{r}
@@ -149,7 +149,7 @@ fillCol(flex = c(NA, 1),
 output$deaths_plot <- renderPlotly({
   if (input$deaths_scale == "Linear") {
     
-    p <- ggplot(daily_deaths, aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
+    p <- ggplot(filter(uk_data, Date >= "2020-03-06"), aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +  
     geom_line(colour = "#8D2313", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
@@ -167,7 +167,7 @@ output$deaths_plot <- renderPlotly({
     
     } else {
       
-      temp <- daily_deaths %>% 
+      temp <- filter(uk_data, Date >= "2020-03-06") %>% 
         arrange(Date) %>% 
         filter(CumDeaths > 0) %>%
         mutate(days = as.integer(Date - min(Date)),
@@ -203,7 +203,7 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [Department of Health and Social Care](https://twitter.com/DHSCgovuk)
+> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 International 
 =======================================================================
@@ -214,10 +214,10 @@ Row
 ### Cumulative number of deaths
 ```{r}
 renderPlotly({
-  p <- ggplot(global_deaths, aes(x = days, y = total_deaths, color = countriesAndTerritories, label = countriesAndTerritories, group = countriesAndTerritories, text = paste0("<b>", countriesAndTerritories, "</b><br><b>", days, "</b> days", "</br><b>", comma(total_deaths), "</b> deaths"))) + 
+  p <- ggplot(country_data, aes(x = days, y = total_deaths, color = countriesAndTerritories, label = countriesAndTerritories, group = countriesAndTerritories, text = paste0("<b>", countriesAndTerritories, "</b><br><b>", days, "</b> days", "</br><b>", comma(total_deaths), "</b> deaths"))) + 
     geom_hline(yintercept = 100, size = 0.3, colour = "#333333") +
     geom_line(size = 0.6) + 
-    geom_text(data = ungroup(filter(group_by(global_deaths,countriesAndTerritories),days == max(days))), aes(x = days, y = total_deaths), fontface = "bold", check_overlap = TRUE, nudge_x = 0.3, nudge_y = 0.03) +
+    geom_text(data = ungroup(filter(group_by(country_data,countriesAndTerritories),days == max(days))), aes(x = days, y = total_deaths), fontface = "bold", check_overlap = TRUE, nudge_x = 0.3, nudge_y = 0.03) +
     scale_colour_manual(values = c("China" = "#E58606", "France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "South_Korea" = "#DAA51B", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A", "USA" = "#CC3A8E")) +
     scale_x_continuous(expand = expansion(add = c(0,1))) +
     scale_y_continuous(trans = "log10", breaks = c(100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000), limits = c(100,50000), expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
@@ -248,7 +248,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: The number of days for China have been truncated to better show the change in the rate of growth amongst other countries. The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> <br/>**Notes**: The number of days for China have been truncated to better show the change in the rate of growth amongst other countries. The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Center for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### COVID-19 Government Response Stringency Index
 ```{r}

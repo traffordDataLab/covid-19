@@ -1,33 +1,35 @@
-library(tidyverse) ; library(httr) ; library(jsonlite)
+library(tidyverse) ; library(httr) ; library(readxl) ; library(jsonlite)
 
 # -------------------------------------------
 # UK cases and deaths
 # -------------------------------------------
 
-# Time series of daily confirmed cases in the UK
-# Source: Department of Health and Social Care
-# URL: https://twitter.com/DHSCgovuk
-daily_cases <- read_csv("https://github.com/traffordDataLab/covid-19/raw/master/data/daily_cases.csv", col_types = cols(
-  Date = col_date(format = "%Y-%m-%d"),
-  NewCases = col_integer(),
-  CumCases = col_integer()))
+# Source: European Centre for Disease Prevention and Control
+# URL: https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
 
-# Time series of daily confirmed deaths in UK hospitals
-# Source: Department of Health and Social Care
-# URL: https://twitter.com/DHSCgovuk
-daily_deaths <- read_csv("https://github.com/traffordDataLab/covid-19/raw/master/data/daily_deaths.csv", col_types = cols(
-  Date = col_date(format = "%Y-%m-%d"),
-  NewDeaths = col_integer(),
-  CumDeaths = col_integer()))
+url <- paste("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-", format(Sys.time(), "%Y-%m-%d"), ".xlsx", sep = "")
+GET(url, authenticate(":", ":", type = "ntlm"), write_disk(tmp <- tempfile(fileext = ".xlsx")))
+
+uk_data <- read_excel(tmp) %>% 
+  filter(countriesAndTerritories == "United_Kingdom", 
+         dateRep >= "2020-01-31") %>% 
+  select(Date = dateRep, NewCases = cases, NewDeaths = deaths) %>% 
+  arrange(Date) %>% 
+  mutate(Date = as.Date(Date, format = "%Y/%b/%d")-1,
+         NewCases = as.integer(NewCases),
+         NewDeaths = as.integer(NewDeaths),
+         CumCases = cumsum(NewCases),
+         CumDeaths = cumsum(NewDeaths)) %>% 
+  select(Date, NewCases, CumCases, NewDeaths, CumDeaths)
 
 # -------------------------------------------
 # Deaths by selected country
 # -------------------------------------------
 
-# Time series of deaths by country
-# Source: European Centre for Disease Prevention and Control 
+# Source: European Centre for Disease Prevention and Control
 # URL: https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
-global_deaths <- read_csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv") %>% 
+
+country_data <- read_excel(tmp) %>% 
   select(dateRep, countriesAndTerritories, deaths) %>% 
   filter(countriesAndTerritories %in% c("China", "France", "Italy", "Germany", "Netherlands", 
                                         "South_Korea", "Spain", "Sweden", "United_Kingdom", 
@@ -45,14 +47,13 @@ global_deaths <- read_csv("https://opendata.ecdc.europa.eu/covid19/casedistribut
   mutate(days = as.integer(dateRep - min(dateRep))) %>% 
   ungroup()
 
-shortened_days <- max(pull(filter(global_deaths, countriesAndTerritories == "Italy"), days))
-global_deaths <- filter(global_deaths, days <= shortened_days)
+shortened_days <- max(pull(filter(country_data, countriesAndTerritories == "Italy"), days))
+country_data <- filter(country_data, days <= shortened_days)
 
 # -------------------------------------------
 # Government Response Stringency Index
 # -------------------------------------------
 
-# Government Response Stringency Index
 # Source: Blavatnik School of Government, Oxford University
 # URL: https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker
 stringency_index <- fromJSON(paste0("https://covidtrackerapi.bsg.ox.ac.uk/api/stringency/date-range/2020-01-31/", Sys.Date()), flatten = TRUE) %>% 
