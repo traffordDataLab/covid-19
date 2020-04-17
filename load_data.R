@@ -1,4 +1,4 @@
-library(tidyverse) ; library(httr) ; library(readxl) ; library(jsonlite)
+library(tidyverse) ; library(jsonlite)
 
 # -------------------------------------------
 # UK cases and deaths
@@ -7,10 +7,20 @@ library(tidyverse) ; library(httr) ; library(readxl) ; library(jsonlite)
 # Source: European Centre for Disease Prevention and Control
 # URL: https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
 
-url <- paste("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-", format(Sys.time(), "%Y-%m-%d"), ".xlsx", sep = "")
-GET(url, authenticate(":", ":", type = "ntlm"), write_disk(tmp <- tempfile(fileext = ".xlsx")))
+ecdc <- read_csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv", 
+                col_types = cols(
+                  dateRep = col_date(format = "%d/%m/%Y"),
+                  day = col_integer(),
+                  month = col_integer(),
+                  year = col_integer(),
+                  cases = col_integer(),
+                  deaths = col_integer(),
+                  countriesAndTerritories = col_character(),
+                  geoId = col_character(),
+                  countryterritoryCode = col_character(),
+                  popData2018 = col_integer()))
 
-uk_data <- read_excel(tmp) %>% 
+uk_data <- ecdc %>% 
   filter(countriesAndTerritories == "United_Kingdom", 
          dateRep >= "2020-01-31") %>% 
   select(Date = dateRep, NewCases = cases, NewDeaths = deaths) %>% 
@@ -29,7 +39,7 @@ uk_data <- read_excel(tmp) %>%
 # Source: European Centre for Disease Prevention and Control
 # URL: https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
 
-country_data <- read_excel(tmp) %>% 
+country_data <- ecdc %>% 
   select(dateRep, countriesAndTerritories, deaths) %>% 
   filter(countriesAndTerritories %in% c("China", "France", "Italy", "Germany", "Netherlands", 
                                         "South_Korea", "Spain", "Sweden", "United_Kingdom", 
