@@ -18,7 +18,7 @@ library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; l
 source("load_data.R")
 ```
 
-Cases 
+Cases {data-navmenu="UK"}
 =======================================================================
 
 Row
@@ -97,7 +97,7 @@ output$cases_plot <- renderPlotly({
 
 > <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
-Deaths 
+Deaths {data-navmenu="UK"}
 =======================================================================
 
 Row
