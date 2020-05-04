@@ -18,83 +18,6 @@ library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; l
 source("load_data.R")
 ```
 
-Trafford
-=======================================================================
-
-Row
--------------------------------------
-
-### <strong>Confirmed cases in Trafford</strong><br/><small>swabbed on `r format(max(gm_data$Date)-5, '%d %B %Y')`</small>
-```{r}
-valueBox(comma(pull(filter(gm_data, AreaName == "Trafford", Date == max(Date)-5),NewCases)), color = "#39809E")
-```
-
-### <strong>Total confirmed cases in Trafford</strong><br/><small>as of `r format(max(gm_data$Date), '%d %B %Y')`</small>
-```{r}
-valueBox(comma(pull(filter(gm_data, AreaName == "Trafford", Date == max(Date)), CumCases)), color = "#39809E")
-```
-
-Row
--------------------------------------
-
-### Daily confirmed cases
-```{r}
-renderPlotly({
-  trafford <- filter(gm_data, AreaName == "Trafford")
-  
-  p <- ggplot(trafford, aes(x = Date, y = NewCases, text = paste0("<b>", comma(NewCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(fill = ifelse(trafford$Date >= max(trafford$Date)-4, "#bdbdbd", "#39809E")) +
-    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank()) 
-  
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE))
-
-})
-```
-
-> <br/>**Notes**: 1) The date of a confirmed case corresponds to the *specimen* date rather than the *reporting* date. 2) There is a lag between the specimen date and the reporting date so recent data are likely to change. Public Health England [recommend](https://coronavirus.data.gov.uk/about) that only data up to `r format(max(gm_data$Date)-4, '%d %B')` should be treated as 'complete'. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are being tested.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
-
-### Cumulative confirmed cases per 10,000 population
-```{r}
-fillCol(flex = c(NA, 1),
-        selectInput("boroughs", label = NULL, choices = c("Bolton", "Bury", "Manchester", "Oldham", "Rochdale", "Salford", "Stockport", "Tameside", "Trafford", "Wigan"), selected = "Trafford", multiple = TRUE),
-        plotlyOutput("rate_plot", height = "100%")
-        )
-
-output$rate_plot <- renderPlotly({
-  req(input$boroughs)
-  p <- ggplot(filter(gm_data, AreaName %in% input$boroughs), aes(x = Date, y = Rate, colour = AreaName, group = AreaName, text = paste0("<b>", AreaName, "</b><br><b>", Rate, "</b> cases per 10,000 population", "</br><b>", format(Date, "%d %B"), "</b>"))) +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_line(size = 1) +
-    scale_color_manual(values = c("Bolton" = "#40bee4", "Bury" = "#161717", "Manchester" = "#debe5d", "Oldham" = "#d58a30", "Rochdale" = "#215d75", "Salford" = "#4d7f7e", "Stockport" = "#0eb080", "Tameside" = "#da3512", "Trafford" = "#39809E", "Wigan" = "#cff2ee")) +
-    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank())
-
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>%
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) %>%
-    hide_legend()
-
-})
-```
-
-> <br/>**Notes**: Mid-2018 population estimates are used as the denominator to calculate infection rates.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk); [Office for National Statistics](https://www.nomisweb.co.uk/query/construct/summary.asp?mode=construct&version=0&dataset=2002)
-
 Cases {data-navmenu="UK"}
 =======================================================================
 
@@ -214,7 +137,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes patients who tested positive for coronavirus and died in a UK hospital. Deaths that occurred in the community in England and Wales are included in provisional figures published by the [Office for National Statistics](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/weeklyprovisionalfiguresondeathsregisteredinenglandandwales) on a weekly basis.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes those who tested positive for coronavirus.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### Cumulative confirmed deaths
 ```{r}
@@ -297,7 +220,7 @@ renderPlotly({
     geom_text(data = ungroup(filter(group_by(country_data,countriesAndTerritories),days == max(days))), aes(x = days, y = total_deaths), fontface = "bold", check_overlap = TRUE, nudge_x = 0.3, nudge_y = 0.03) +
     scale_colour_manual(values = c("China" = "#E58606", "France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "South_Korea" = "#DAA51B", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A", "USA" = "#CC3A8E")) +
     scale_x_continuous(expand = expansion(add = c(0,1))) +
-    scale_y_continuous(trans = "log10", breaks = c(100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000), limits = c(100,50000), expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
+    scale_y_continuous(trans = "log10", breaks = c(100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000), limits = c(100,NA), expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
     labs(x = "Days since 100th death", y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
     theme_minimal() +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),

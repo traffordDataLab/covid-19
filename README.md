@@ -2,7 +2,6 @@
     <p>This dashboard visualises daily confirmed coronavirus cases and deaths in the United Kingdom. Further information about coronavirus (COVID-19) can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
     <strong>Data sources</strong>
     <ul>
-        <li><a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a></li>
         <li><a href="https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide" target="_blank">European Centre for Disease Prevention and Control</a></li>
         <li><a href="https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker" target="_blank">Blavatnik School of Government, Oxford University</a></li>
     </ul>
