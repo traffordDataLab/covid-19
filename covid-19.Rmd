@@ -253,10 +253,10 @@ renderPlotly({
 ### COVID-19 Government Response Stringency Index
 ```{r}
 renderPlot({
-  ggplot(stringency_index,  aes(x = date_value, y = stringency, colour = country, label = country, group = country)) +
+  ggplot(stringency_index,  aes(x = Date, y = Stringency, colour = Country, label = Country, group = Country)) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_line(size = 1) +
-    geom_text_repel(data = ungroup(filter(group_by(stringency_index, country), date_value == max(date_value))), aes(x = date_value, y = stringency), fontface = "bold", segment.color = NA, nudge_y = 1.4) +
+    geom_text_repel(data = ungroup(filter(group_by(stringency_index, Country), Date == max(Date))), aes(x = Date, y = Stringency), fontface = "bold", segment.color = NA, nudge_y = 1.4) +
     scale_colour_manual(values = c("Germany" = "#CC61B0", "Italy" = "#99C945", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100)) +
@@ -267,8 +267,7 @@ renderPlot({
           panel.grid.minor = element_blank(),
           strip.text.x = element_blank(),
           axis.text.x = element_text(angle = 90, hjust = 1)) +
-    guides(colour = FALSE) +
-    facet_wrap(~country, nrow = 1)
+    guides(colour = FALSE)
 
 }, execOnResize = TRUE)    
 ```

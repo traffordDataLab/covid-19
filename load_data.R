@@ -1,4 +1,4 @@
-library(tidyverse) ; library(jsonlite)
+library(tidyverse) 
 
 # -------------------------------------------
 # UK cases and deaths
@@ -65,18 +65,16 @@ country_data <- filter(country_data, days <= shortened_days)
 # -------------------------------------------
 
 # Source: Blavatnik School of Government, Oxford University
-# URL: https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker
+# URL: https://www.bsg.ox.ac.uk/research/research-projects/coronavirus-government-response-tracker
 
-stringency_index <- fromJSON(paste0("https://covidtrackerapi.bsg.ox.ac.uk/api/stringency/date-range/2020-01-31/", Sys.Date()), flatten = TRUE) %>% 
-  pluck("data") %>% 
-  enframe() %>%
-  unnest(cols = c(value)) %>% 
-  unnest_wider(value) %>% 
-  filter(country_code %in% c("DEU", "ESP", "ITA", "SWE", "GBR")) %>% 
-  select(date_value, country_code, stringency) %>% 
-  mutate(date_value = as.Date(date_value, format = "%Y-%m-%d"),
-         country = case_when(
-           country_code == "DEU" ~ "Germany", country_code == "ESP" ~ "Spain", 
-           country_code == "ITA" ~ "Italy", country_code == "SWE" ~ "Sweden", 
-           country_code == "GBR" ~ "UK"
-         ))
+stringency_index <- read_csv("https://github.com/OxCGRT/covid-policy-tracker/raw/master/data/OxCGRT_latest.csv") %>%  
+  filter(CountryCode %in% c("DEU", "ESP", "ITA", "SWE", "GBR")) %>% 
+  mutate(Date = as.Date(as.character(Date), format = "%Y%m%d"),
+         Country = case_when(
+           CountryCode == "DEU" ~ "Germany", 
+           CountryCode == "ESP" ~ "Spain", 
+           CountryCode == "ITA" ~ "Italy", 
+           CountryCode == "SWE" ~ "Sweden", 
+           CountryCode == "GBR" ~ "UK")) %>% 
+  select(Date, Country, Stringency = StringencyIndexForDisplay)
+  
