@@ -13,7 +13,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(scales) ; library(plotly) ; library(ggrepel)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(zoo) ; library(scales) ; library(plotly) ; library(ggrepel) ; library(classInt) ; library(leaflet) ; library(leaflet.extras)
 
 source("load_data.R")
 ```
@@ -40,9 +40,14 @@ Row
 ### Daily confirmed cases
 ```{r}
 renderPlotly({
-  p <- ggplot(uk_data, aes(x = Date, y = NewCases, text = paste0("<b>", comma(NewCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
+  
+  daily_cases <- uk_data %>% 
+    mutate(ma_cases = rollmean(NewCases, 7, align = "right", fill = NA))
+  
+  p <- ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(fill = "#39809E") +
+    geom_col(data = daily_cases, aes(x = Date, y = NewCases, text = paste0("<b>", comma(NewCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B"))), fill = "#39809E", alpha = 0.6) +
+    geom_line(data = daily_cases, aes(x = Date, y = ma_cases, text = "7 day rolling average"), colour = "#39809E", size = 1) +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
@@ -58,7 +63,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(uk_data$Date), '%d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are being tested.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> **Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(uk_data$Date), '%d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are being tested.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
  
 ### Cumulative confirmed cases
 ```{r}
@@ -95,7 +100,7 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 Deaths {data-navmenu="UK"}
 =======================================================================
@@ -119,9 +124,15 @@ Row
 ### Daily confirmed deaths
 ```{r}
 renderPlotly({
-  p <- ggplot(filter(uk_data, Date >= "2020-03-06"), aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
+  
+  daily_deaths <- uk_data %>% 
+    filter(Date >= "2020-03-06") %>% 
+    mutate(ma_deaths = rollmean(NewDeaths, 7, align = "right", fill = NA))
+  
+  p <- ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(fill = "#8D2313") +
+    geom_col(data = daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B"))), fill = "#8D2313", alpha = 0.6) +
+    geom_line(data = daily_deaths, aes(x = Date, y = ma_deaths, text = "7 day rolling average"), colour = "#8D2313", size = 1) +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
@@ -137,7 +148,7 @@ renderPlotly({
 })
 ```
 
-> <br/>**Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes those who tested positive for coronavirus.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> **Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes those who tested positive for coronavirus.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### Cumulative confirmed deaths
 ```{r}
@@ -203,7 +214,56 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
-> <br/>**Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+
+Maps {data-navmenu="UK"}
+=======================================================================
+
+### Cumulative confirmed cases
+
+```{r}
+cumulative_cases <- utla_data %>% 
+  mutate(popup = str_c("<strong>", area_name, "</strong><br/><strong>", comma(cumulative_lab_confirmed_cases), "</strong> confirmed cases among ", comma(population), " residents<br/>", format(`Specimen date`, "%d %B")) %>% map(HTML))
+
+renderLeaflet({
+  leaflet() %>%
+  setView(-2.07811, 53.23497, zoom = 7) %>% 
+  addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+           attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
+  addPolygons(data = cumulative_cases, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd")  %>% 
+  addCircleMarkers(data = cumulative_cases, lng = ~long, lat = ~lat, radius = ~cumulative_lab_confirmed_cases/100, fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
+  addFullscreenControl() %>% 
+  addResetMapButton() %>% 
+  onRender(
+    paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
+})
+```
+
+> **Notes**: 1) The size of the circles are proportional to the number of cumulative confirmed cases in each UTLA 2) Upper Tier Local Authorities (UTLAs) include Counties, Unitary Authorities, Metropolitan Districts and London Boroughs. 3) Confirmed cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
+
+### Age-standardised COVID-19 mortality rates
+```{r}
+age_standardised_deaths <- age_standardised_deaths %>% 
+  mutate(popup = ifelse(!is.na(rate), str_c("<strong>", area_name, "</strong><br/><strong>", rate, "</strong> deaths per 100,000 people") %>% map(HTML), str_c("<strong>", area_name, "</strong><br/>", "No data available") %>% map(HTML)))
+
+renderLeaflet({
+  breaks <- classIntervals(age_standardised_deaths$rate, n = 5, style = "jenks")$brks
+  pal <- colorBin(palette = "Reds", domain = NULL, bins = breaks, na.color = "#D7D8D7")
+  
+  leaflet(data = filter(age_standardised_deaths, !is.na(rate))) %>%
+    setView(-2.07811, 53.23497, zoom = 7) %>% 
+    addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/deathsinvolvingcovid19bylocalareaanddeprivation" target="_blank">Office for National Statistics</a>') %>%
+    addPolygons(data = filter(age_standardised_deaths, is.na(rate)), fillColor = "#D7D8D7", fillOpacity = 1, weight = 0.5, color = "#bdbdbd", label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
+    addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 0.5, color = "#bdbdbd", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>% 
+    addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Rate per 100,000 people<br/><small>1 March - 17 April 2020</small>", position = "bottomright") %>% 
+    addFullscreenControl() %>% 
+    addResetMapButton() %>% 
+    onRender(
+      paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
+})
+```
+
+> **Notes**: Age-standardised mortality rates adjust for the size and age structure of the resident population.<br/>**Source**: [Office for National Statistics ](https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/deathsinvolvingcovid19bylocalareaanddeprivation)
 
 International 
 =======================================================================
@@ -215,40 +275,27 @@ Row
 ```{r}
 renderPlotly({
   p <- ggplot(country_data, aes(x = days, y = total_deaths, color = countriesAndTerritories, label = countriesAndTerritories, group = countriesAndTerritories, text = paste0("<b>", countriesAndTerritories, "</b><br><b>", days, "</b> days", "</br><b>", comma(total_deaths), "</b> deaths"))) + 
-    geom_hline(yintercept = 100, size = 0.3, colour = "#333333") +
-    geom_line(size = 0.6) + 
-    geom_text(data = ungroup(filter(group_by(country_data,countriesAndTerritories),days == max(days))), aes(x = days, y = total_deaths), fontface = "bold", check_overlap = TRUE, nudge_x = 0.3, nudge_y = 0.03) +
-    scale_colour_manual(values = c("China" = "#E58606", "France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "South_Korea" = "#DAA51B", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A", "USA" = "#CC3A8E")) +
-    scale_x_continuous(expand = expansion(add = c(0,1))) +
-    scale_y_continuous(trans = "log10", breaks = c(100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000), limits = c(100,NA), expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
-    labs(x = "Days since 100th death", y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.minor = element_blank()) +
-    guides(colour = FALSE)
+  geom_hline(yintercept = 100, size = 0.3, colour = "#333333") +
+  geom_line(size = 0.6) + 
+  scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
+  scale_x_continuous(expand = expansion(add = c(0,8))) +
+  scale_y_continuous(trans = "log10", breaks = c(100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000), limits = c(100,NA), expand = expansion(add = c(0,0.1)), labels = comma_format(accuracy = 1)) +
+  labs(x = "Days since 100th death", y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
+  theme_minimal() +
+  theme(plot.margin = unit(rep(0.5, 4), "cm"),
+        panel.grid.minor = element_blank()) +
+  guides(colour = FALSE) +
+  coord_cartesian(clip = "off")
   
-  p <- ggplotly(p, tooltip = "text") %>%
+  ggplotly(p, tooltip = "text") %>%
     config(displayModeBar = FALSE) %>%
     layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) %>% 
-    hide_legend()
-  
-  p$x$data[[12]]$hoverinfo <- "none"
-  p$x$data[[13]]$hoverinfo <- "none"
-  p$x$data[[14]]$hoverinfo <- "none"
-  p$x$data[[15]]$hoverinfo <- "none"
-  p$x$data[[16]]$hoverinfo <- "none"
-  p$x$data[[17]]$hoverinfo <- "none"
-  p$x$data[[18]]$hoverinfo <- "none"
-  p$x$data[[19]]$hoverinfo <- "none"
-  p$x$data[[20]]$hoverinfo <- "none"
-  p$x$data[[21]]$hoverinfo <- "none"
-  
-  p
+    layout(yaxis = list(fixedrange = TRUE)) 
+
 })
 ```
 
-> <br/>**Notes**: The number of days for China have been truncated to better show the change in the rate of growth amongst other countries. The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> **Notes**: 1) Countries have different methods of recording COVID-19 deaths 2) The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### COVID-19 Government Response Stringency Index
 ```{r}
@@ -257,7 +304,7 @@ renderPlot({
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_line(size = 1) +
     geom_text_repel(data = ungroup(filter(group_by(stringency_index, Country), Date == max(Date))), aes(x = Date, y = Stringency), fontface = "bold", segment.color = NA, nudge_y = 1.4) +
-    scale_colour_manual(values = c("Germany" = "#CC61B0", "Italy" = "#99C945", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
+    scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100)) +
     labs(x = NULL, y = "Stringency Index (0 = no measures)", title = NULL, subtitle = NULL, caption = NULL) + 
@@ -267,12 +314,13 @@ renderPlot({
           panel.grid.minor = element_blank(),
           strip.text.x = element_blank(),
           axis.text.x = element_text(angle = 90, hjust = 1)) +
-    guides(colour = FALSE)
+    guides(colour = FALSE) +
+    facet_wrap(~Country, nrow = 1)
 
 }, execOnResize = TRUE)    
 ```
 
-> <br/>**Notes**: The [Oxford COVID-19 Government Response Tracker (OxCGRT)](www.bsg.ox.ac.uk/covidtracker) compares government responses to the coronavirus pandemic by creating a composite index of different categories of response. A score of 0 on the Index indicates no measures have been taken.<br/>**Source**: [Blavatnik School of Government, Oxford University](https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker).
+> **Notes**: The [Oxford COVID-19 Government Response Tracker (OxCGRT)](www.bsg.ox.ac.uk/covidtracker) compares government responses to the coronavirus pandemic by creating a composite index of different categories of response. A score of 0 on the Index indicates no measures have been taken.<br/>**Source**: [Blavatnik School of Government, Oxford University](https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker).
 
 About {data-icon="fa-info-circle"}
 =======================================================================

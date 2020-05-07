@@ -1,4 +1,4 @@
-library(tidyverse) 
+library(tidyverse) ; library(sf)
 
 # -------------------------------------------
 # UK cases and deaths
@@ -41,14 +41,11 @@ uk_data <- ecdc %>%
 
 country_data <- ecdc %>% 
   select(dateRep, countriesAndTerritories, deaths) %>% 
-  filter(countriesAndTerritories %in% c("China", "France", "Italy", "Germany", "Netherlands", 
-                                        "South_Korea", "Spain", "Sweden", "United_Kingdom", 
-                                        "United_States_of_America")) %>% 
+  filter(countriesAndTerritories %in% c("France", "Italy", "Germany", "Netherlands", 
+                                        "Spain", "Sweden", "United_Kingdom")) %>% 
   mutate(dateRep = as.Date(dateRep, format = "%d/%m/%Y"),
          countriesAndTerritories = case_when(
-           countriesAndTerritories == "South_Korea" ~ "South Korea",
            countriesAndTerritories == "United_Kingdom" ~ "UK",
-           countriesAndTerritories == "United_States_of_America" ~ "USA",
            TRUE ~ countriesAndTerritories)) %>% 
   group_by(countriesAndTerritories) %>% 
   arrange(dateRep) %>%
@@ -57,8 +54,31 @@ country_data <- ecdc %>%
   mutate(days = as.integer(dateRep - min(dateRep))) %>% 
   ungroup()
 
-shortened_days <- max(pull(filter(country_data, countriesAndTerritories == "Italy"), days))
-country_data <- filter(country_data, days <= shortened_days)
+# -------------------------------------------
+# Cases by UTLA
+# -------------------------------------------
+
+# Daily cases
+# Source: Public Health England
+# URL: https://coronavirus.data.gov.uk/#local-authorities
+
+utla_cases <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
+  filter(`Specimen date` == max(`Specimen date`)) %>% 
+  select(area_code = `Area code`, `Specimen date`, cumulative_lab_confirmed_cases = `Cumulative lab-confirmed cases`) 
+
+utla_data <- st_read("data/utla.geojson") %>% 
+  left_join(utla_cases, by = "area_code") %>% 
+  filter(!is.na(long)) %>% 
+  select(area_code, area_name, everything()) 
+
+# -------------------------------------------
+# Age-standardised COVID-19 mortality rate
+# -------------------------------------------
+
+# Source: Office for National Statistics
+# URL: https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/deathsinvolvingcovid19bylocalareaanddeprivation
+
+age_standardised_deaths <- st_read("data/age_standardised_deaths.geojson") 
 
 # -------------------------------------------
 # Government Response Stringency Index
@@ -68,12 +88,14 @@ country_data <- filter(country_data, days <= shortened_days)
 # URL: https://www.bsg.ox.ac.uk/research/research-projects/coronavirus-government-response-tracker
 
 stringency_index <- read_csv("https://github.com/OxCGRT/covid-policy-tracker/raw/master/data/OxCGRT_latest.csv") %>%  
-  filter(CountryCode %in% c("DEU", "ESP", "ITA", "SWE", "GBR")) %>% 
+  filter(CountryCode %in% c("DEU", "ESP", "FRA", "ITA", "NLD", "SWE", "GBR")) %>% 
   mutate(Date = as.Date(as.character(Date), format = "%Y%m%d"),
          Country = case_when(
            CountryCode == "DEU" ~ "Germany", 
            CountryCode == "ESP" ~ "Spain", 
+           CountryCode == "FRA" ~ "France", 
            CountryCode == "ITA" ~ "Italy", 
+           CountryCode == "NLD" ~ "Netherlands", 
            CountryCode == "SWE" ~ "Sweden", 
            CountryCode == "GBR" ~ "UK")) %>% 
   select(Date, Country, Stringency = StringencyIndexForDisplay)
