@@ -55,30 +55,21 @@ country_data <- ecdc %>%
   ungroup()
 
 # -------------------------------------------
-# Cases by UTLA
+# Cases by Local authority District
 # -------------------------------------------
 
 # Daily cases
 # Source: Public Health England
 # URL: https://coronavirus.data.gov.uk/#local-authorities
 
-utla_cases <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
-  filter(`Specimen date` == max(`Specimen date`)) %>% 
+phe <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
+  filter(`Area type` == "Lower tier local authority", `Specimen date` == max(`Specimen date`)) %>% 
   select(area_code = `Area code`, `Specimen date`, cumulative_lab_confirmed_cases = `Cumulative lab-confirmed cases`) 
 
-utla_data <- st_read("data/utla.geojson") %>% 
-  left_join(utla_cases, by = "area_code") %>% 
+la_data <- st_read("data/lad.geojson") %>% 
+  left_join(phe, by = "area_code") %>% 
   filter(!is.na(long)) %>% 
   select(area_code, area_name, everything()) 
-
-# -------------------------------------------
-# Age-standardised COVID-19 mortality rate
-# -------------------------------------------
-
-# Source: Office for National Statistics
-# URL: https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/deathsinvolvingcovid19bylocalareaanddeprivation
-
-age_standardised_deaths <- st_read("data/age_standardised_deaths.geojson") 
 
 # -------------------------------------------
 # Government Response Stringency Index
