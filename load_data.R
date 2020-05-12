@@ -1,4 +1,4 @@
-library(tidyverse) ; library(sf)
+library(tidyverse) ; library(readxl) ; library(httr) ; library(sf)
 
 # -------------------------------------------
 # UK cases and deaths
@@ -7,18 +7,23 @@ library(tidyverse) ; library(sf)
 # Source: European Centre for Disease Prevention and Control
 # URL: https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
 
-ecdc <- read_csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv", 
-                col_types = cols(
-                  dateRep = col_date(format = "%d/%m/%Y"),
-                  day = col_integer(),
-                  month = col_integer(),
-                  year = col_integer(),
-                  cases = col_integer(),
-                  deaths = col_integer(),
-                  countriesAndTerritories = col_character(),
-                  geoId = col_character(),
-                  countryterritoryCode = col_character(),
-                  popData2018 = col_integer()))
+tmp <- tempfile(fileext = ".xlsx")
+GET(url = "https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide.xlsx",
+    write_disk(tmp))
+ecdc <- read_xlsx(tmp, sheet = 1)
+
+# ecdc <- read_csv("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv", 
+#                  col_types = cols(
+#                    dateRep = col_date(format = "%d/%m/%Y"),
+#                    day = col_integer(),
+#                    month = col_integer(),
+#                    year = col_integer(),
+#                    cases = col_integer(),
+#                    deaths = col_integer(),
+#                    countriesAndTerritories = col_character(),
+#                    geoId = col_character(),
+#                    countryterritoryCode = col_character(),
+#                    popData2018 = col_integer()))
 
 uk_data <- ecdc %>% 
   filter(countriesAndTerritories == "United_Kingdom", 

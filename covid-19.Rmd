@@ -100,7 +100,7 @@ output$cases_plot <- renderPlotly({
 })
 ```
 
-> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.
+> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 Deaths {data-navmenu="UK"}
 =======================================================================
@@ -214,7 +214,7 @@ output$deaths_plot <- renderPlotly({
 })
 ```
 
-> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.
+> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 Maps {data-navmenu="UK"}
 =======================================================================
@@ -262,7 +262,7 @@ renderLeaflet({
 })
 ```
 
-> **Notes**: The rate of cases is calculated by dividing the cumulative number of cases by the mid-2018 estimate of the resident population of each local authority multiplied by 100,000.
+> **Notes**: The rate of cases is calculated by dividing the cumulative number of cases by the mid-2018 estimate of the resident population of each local authority multiplied by 100,000.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
 
 International 
 =======================================================================
