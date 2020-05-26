@@ -300,7 +300,7 @@ renderPlotly({
 ```{r}
 stringency_index <- stringency_index %>% 
   mutate(interval = cut(Stringency,
-                        breaks = c(0,1,20,40,60,80,100),
+                        breaks = c(0,1,21,41,61,81,Inf),
                         labels = c("0","1-20","21-40","41-60","61-80","81-100"),          
                         right = FALSE),
          interval = fct_explicit_na(interval, na_level = "No data"))
@@ -309,9 +309,9 @@ renderPlot({
   ggplot(stringency_index, aes(x = Date, y = Country)) + 
   geom_tile(aes(fill = interval), color = "#FFFFFF", size = 0.3) + 
   scale_fill_manual(name = NULL,
-                    values = c("No data" = "#bdbdbd", "0" = "#D3E8F0", "1-20" = "#fddbc7", 
-                               "21-40" = "#f4a582", "41-60" = "#d6604d", "61-80" = "#b2182b", 
-                               "81-100" = "#67001f"), 
+                    values = c("No data" = "#bdbdbd", "0" = "#D3E8F0", "1-20" = "#FCE4EC", 
+                               "21-40" = "#F48FB1", "41-60" = "#EC407A", "61-80" = "#D81B60", 
+                               "81-100" = "#AD1457"), 
                     guide = guide_legend(
                       direction = "horizontal",
                       nrow = 1,
