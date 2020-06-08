@@ -8,5 +8,4 @@
         <li><a href="https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker" target="_blank">Blavatnik School of Government, Oxford University</a></li>
     </ul>
     <strong>Credits</strong>
-    <p>This application was built by the <a href="https://www.trafforddatalab.io" target="_blank">Trafford Data Lab</a> in <a href="https://cran.r-project.org" target="_blank">R</a> using the <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">shiny</a>, <a
-            href="https://cran.r-project.org/web/packages/flexdashboard/index.html" target="_blank"> package.</p>
+    <p>This application was built by the <a href="https://www.trafforddatalab.io" target="_blank">Trafford Data Lab</a> in <a href="https://cran.r-project.org" target="_blank">R</a> using the <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">shiny</a> package.</p>
