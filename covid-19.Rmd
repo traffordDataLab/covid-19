@@ -219,10 +219,10 @@ output$deaths_plot <- renderPlotly({
 Maps {data-navmenu="UK"}
 =======================================================================
 
-### Cumulative confirmed cases in England
+### New confirmed cases in last 7 days
 ```{r}
 cumulative_cases <- la_data %>% 
-  mutate(popup = str_c("<strong>", area_name, "</strong><br/><strong>", comma(cumulative_lab_confirmed_cases), "</strong> confirmed cases<br/>", format(`Specimen date`, "%d %B")) %>% map(HTML))
+  mutate(popup = str_c("<strong>", area_name, "</strong><br/><strong>", cum_cases, "</strong> confirmed cases<br/>to ", format(date, "%d %B")) %>% map(HTML))
 
 renderLeaflet({
   leaflet() %>%
@@ -230,7 +230,7 @@ renderLeaflet({
   addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
            attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
   addPolygons(data = cumulative_cases, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd")  %>% 
-  addCircleMarkers(data = cumulative_cases, lng = ~long, lat = ~lat, radius = ~sqrt(cumulative_lab_confirmed_cases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
+  addCircleMarkers(data = cumulative_cases, lng = ~long, lat = ~lat, radius = ~sqrt(cum_cases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
   addFullscreenControl() %>% 
   addResetMapButton() %>% 
   onRender(
@@ -240,20 +240,21 @@ renderLeaflet({
 
 > **Notes**: 1) The size of the circles are proportional to the number of cumulative confirmed cases in each local authority district 2) Confirmed cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
 
-### Rate of confirmed cases in England
+### Rate of new confirmed cases in last 7 days
 ```{r}
 infection_rate <- la_data %>%
-  mutate(rate = round(cumulative_lab_confirmed_cases/population*100000,0),
-         popup = str_c("<strong>", area_name, "</strong><br/><strong>", rate, "</strong> cases per 100,000 residents<br/>", format(`Specimen date`, "%d %B")) %>% map(HTML))
+  mutate(rate = round(cum_cases/population*100000,0),
+         popup = str_c("<strong>", area_name, "</strong><br/><strong>", rate, "</strong> cases per 100,000 residents<br/>to ", format(date, "%d %B")) %>% map(HTML))
 
 renderLeaflet({
   breaks <- classIntervals(infection_rate$rate, n = 5, style = "jenks")$brks
   pal <- colorBin(palette = "Blues", domain = NULL, bins = breaks, na.color = "#D7D8D7")
 
-  leaflet(data = infection_rate) %>%
+  leaflet(data = filter(infection_rate, rate != 0)) %>%
     setView(-2.07811, 53.23497, zoom = 7) %>%
     addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
-    addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 0.5, color = "#bdbdbd", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto"), highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) %>%
+    addPolygons(data = filter(infection_rate, rate == 0), fillColor = "#FFFFFF", fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 0.5, color = "#bdbdbd", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto"), highlightOptions = highlightOptions(color = "#212121", weight = 2, bringToFront = TRUE)) %>% 
+    addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 0.5, color = "#bdbdbd", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto"), highlightOptions = highlightOptions(color = "#212121", weight = 2, bringToFront = TRUE)) %>%
     addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Rate per 100,000 residents", position = "bottomright") %>%
     addFullscreenControl() %>%
     addResetMapButton() %>%

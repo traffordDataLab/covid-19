@@ -1,4 +1,4 @@
-library(tidyverse) ; library(readxl) ; library(httr) ; library(sf)
+library(tidyverse) ; library(readxl) ; library(httr) ; library(sf) ; library(lubridate)
 
 # -------------------------------------------
 # UK cases and deaths
@@ -67,8 +67,12 @@ country_data <- ecdc %>%
 # URL: https://coronavirus.data.gov.uk/#local-authorities
 
 phe <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
-  filter(`Area type` == "Lower tier local authority", `Specimen date` == max(`Specimen date`)) %>% 
-  select(area_code = `Area code`, `Specimen date`, cumulative_lab_confirmed_cases = `Cumulative lab-confirmed cases`) 
+  filter(`Area type` == "Lower tier local authority", 
+         `Specimen date` >= max(`Specimen date`) - days(7)) %>% 
+  mutate(date = max(`Specimen date`)) %>% 
+  group_by(`Area code`, `Area name`, date) %>% 
+  summarise(cum_cases = sum(`Daily lab-confirmed cases`)) %>% 
+  select(area_code = `Area code`, date, cum_cases) 
 
 la_data <- st_read("data/lad.geojson") %>% 
   left_join(phe, by = "area_code") %>% 
