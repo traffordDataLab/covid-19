@@ -13,7 +13,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(zoo) ; library(scales) ; library(plotly) ; library(ggrepel) ; library(classInt) ; library(leaflet) ; library(leaflet.extras)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(zoo) ; library(scales) ; library(plotly) ; library(classInt) ; library(leaflet) ; library(leaflet.extras)
 
 source("load_data.R")
 ```
@@ -238,7 +238,7 @@ renderLeaflet({
 })
 ```
 
-> **Notes**: 1) The size of the circles are proportional to the number of cumulative confirmed cases in each local authority district 2) Confirmed cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
+> **Notes**: 1) The size of the circles are proportional to the number of confirmed cases over the last seven days in each local authority district. 2) Confirmed cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
 
 ### Rate of new confirmed cases in last 7 days
 ```{r}
@@ -263,7 +263,7 @@ renderLeaflet({
 })
 ```
 
-> **Notes**: The rate of cases is calculated by dividing the cumulative number of cases by the mid-2018 estimate of the resident population of each local authority multiplied by 100,000.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
+> **Notes**: The rate of cases is calculated by dividing the cumulative number of cases over the last seven days by the mid-2018 estimate of the resident population of each local authority multiplied by 100,000.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
 
 International 
 =======================================================================
@@ -299,36 +299,23 @@ renderPlotly({
 
 ### COVID-19 Government Response Stringency Index
 ```{r}
-stringency_index <- stringency_index %>% 
-  mutate(interval = cut(Stringency,
-                        breaks = c(0,1,21,41,61,81,Inf),
-                        labels = c("0","1-20","21-40","41-60","61-80","81-100"),          
-                        right = FALSE),
-         interval = fct_explicit_na(interval, na_level = "No data"))
-
 renderPlot({
-  ggplot(stringency_index, aes(x = Date, y = Country)) + 
-  geom_tile(aes(fill = interval), color = "#FFFFFF", size = 0.3) + 
-  scale_fill_manual(name = NULL,
-                    values = c("No data" = "#bdbdbd", "0" = "#D3E8F0", "1-20" = "#FCE4EC", 
-                               "21-40" = "#F48FB1", "41-60" = "#EC407A", "61-80" = "#D81B60", 
-                               "81-100" = "#AD1457"), 
-                    guide = guide_legend(
-                      direction = "horizontal",
-                      nrow = 1,
-                      label.hjust = 0.5,
-                      keyheight = unit(1.5, units = "mm"), 
-                      keywidth = unit(12, units = "mm"))) +
-  scale_x_date(expand = c(0.005,0.005), date_labels = "%b %d", date_breaks = "1 month") +
-  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-  facet_grid(Country ~ ., scales = "free_y") +
-  theme_minimal(base_size = 14) +
-  theme(plot.margin = unit(rep(0.5, 4), "cm"),
-        panel.grid = element_blank(),
-        panel.spacing.y = unit(1, "lines"),
-        strip.text.y = element_blank(),
-        axis.text.y = element_text(face = "bold"),
-        legend.position = "top")
+  ggplot(stringency_index,  aes(x = Date, y = Stringency, colour = Country, label = Country, group = Country)) +
+    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
+    geom_line(size = 1) +
+    scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
+    scale_x_date(expand = c(0.005, 0.4), date_labels = "%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100)) +
+    labs(x = NULL, y = "Stringency Index (0 = no measures)", title = NULL, subtitle = NULL, caption = NULL) + 
+    theme_minimal(base_size = 16) +
+    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          strip.text.x = element_text(hjust = 0),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(angle = 90, hjust = 1)) +
+    guides(colour = FALSE) +
+    facet_wrap(~Country, nrow = 1)
   
 }, execOnResize = TRUE)   
 ```
