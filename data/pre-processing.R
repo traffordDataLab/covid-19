@@ -27,20 +27,14 @@ lad <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643
 # Population estimates
 # ------------------------------------------- 
 
-# Mid-2019 population estimates
-# Source: ONS
-# URL: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland
+# Mid-2018 population estimates
+# Source: Nomis / ONS
+# URL: https://www.nomisweb.co.uk/datasets/pestsyoala
 
 # NB combine population estimates for Cornwall and Isles of Scilly
 
-tmp <- tempfile(fileext = ".xls")
-GET(url = "https://www.ons.gov.uk/file?uri=%2fpeoplepopulationandcommunity%2fpopulationandmigration%2fpopulationestimates%2fdatasets%2fpopulationestimatesforukenglandandwalesscotlandandnorthernireland%2fmid2019april2020localauthoritydistrictcodes/ukmidyearestimates20192020ladcodes.xls",
-    write_disk(tmp))
-
-population <- read_xls(tmp, sheet = 6, range = "A5:D420") %>% 
-  filter(Geography1 %in% c("London Borough", "Metropolitan District", 
-                           "Non-metropolitan District", "Unitary Authority")) %>% 
-  select(area_code = Code, population = `All ages`) %>% 
+population <- population <- read_csv("http://www.nomisweb.co.uk/api/v01/dataset/NM_2002_1.data.csv?geography=1820327937...1820328318&date=latest&gender=0&c_age=200&measures=20100&select=geography_code,obs_value") %>%  
+  rename(area_code = GEOGRAPHY_CODE, population = OBS_VALUE) %>% 
   mutate(area_code = case_when(as.character(area_code) %in% c("E06000052", "E06000053") ~ "E06000052", TRUE ~ area_code)) %>% 
   group_by(area_code) %>% 
   summarise(population = sum(population))

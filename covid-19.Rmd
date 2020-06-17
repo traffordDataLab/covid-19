@@ -263,7 +263,7 @@ renderLeaflet({
 })
 ```
 
-> **Notes**: The rate of cases is calculated by dividing the cumulative number of cases over the last seven days by the mid-2019 estimate of the resident population of each local authority multiplied by 100,000.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk) | [ONS](https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland)
+> **Notes**: The rate of cases is calculated by dividing the cumulative number of cases over the last seven days by the mid-2018 estimate of the resident population of each local authority multiplied by 100,000.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk) | [Nomis / ONS](https://www.nomisweb.co.uk/datasets/pestsyoala)
 
 International 
 =======================================================================
