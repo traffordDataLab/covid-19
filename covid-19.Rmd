@@ -13,7 +13,7 @@ runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(zoo) ; library(scales) ; library(plotly) ; library(classInt) ; library(leaflet) ; library(leaflet.extras)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(zoo) ; library(scales) ; library(plotly) ; library(classInt) ; library(leaflet) ; library(leaflet.extras) ; library(shadowtext)
 
 source("load_data.R")
 ```
@@ -265,37 +265,35 @@ renderLeaflet({
 
 > **Notes**: The rate of cases is calculated by dividing the cumulative number of cases over the last seven days by the mid-2018 estimate of the resident population of each local authority multiplied by 100,000.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk) | [Nomis / ONS](https://www.nomisweb.co.uk/datasets/pestsyoala)
 
-International 
+Europe 
 =======================================================================
 
 Row
 -------------------------------------
 
-### Cumulative number of deaths
+### Daily new confirmed cases, 7-day moving average
 ```{r}
-renderPlotly({
-  p <- ggplot(country_data, aes(x = days, y = total_deaths, color = countriesAndTerritories, label = countriesAndTerritories, group = countriesAndTerritories, text = paste0("<b>", countriesAndTerritories, "</b><br><b>", days, "</b> days", "</br><b>", comma(total_deaths, accuracy = 1), "</b> deaths"))) + 
-  geom_hline(yintercept = 100, size = 0.3, colour = "#333333") +
-  geom_line(size = 0.6) + 
-  scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
-  scale_x_continuous(expand = expansion(add = c(0,8))) +
-  scale_y_continuous(trans = "log10", breaks = c(100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000), limits = c(100,100000), expand = expansion(add = c(0,0.1)), labels = comma_format(accuracy = 1)) +
-  labs(x = "Days since 100th death", y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
-  theme_minimal() +
+renderPlot({
+  
+  ggplot(country_data, aes(x = dateRep, y = ma_cases, color = countriesAndTerritories, label = countriesAndTerritories, group = countriesAndTerritories)) + 
+  geom_hline(yintercept = 00, size = 0.3, colour = "#333333") +
+  geom_line(size = 1) + 
+  geom_shadowtext(data = . %>% group_by(countriesAndTerritories) %>% top_n(1, ma_cases), aes(label = paste0(" ", countriesAndTerritories)), size = 5, hjust = 0, vjust = 0, bg.color = "white") +
+  scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
+  scale_x_date(expand = c(0, 30), date_labels = "%b") +
+  scale_y_continuous(expand = expansion(add = c(0,0.1)), labels = comma, position = "right") +
+  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
+  theme_minimal(base_size = 16) +
   theme(plot.margin = unit(rep(0.5, 4), "cm"),
+        panel.grid.major.x = element_blank(),
         panel.grid.minor = element_blank()) +
   guides(colour = FALSE) +
   coord_cartesian(clip = "off")
   
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>%
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) 
-
-})
+}, execOnResize = TRUE) 
 ```
 
-> **Notes**: 1) Countries have different methods of recording COVID-19 deaths 2) The chart is inspired by the [Financial Times' coronavirus trajectory tracker](https://www.ft.com/coronavirus-latest) which is built and updated by [\@jburnmurdoch](https://twitter.com/jburnmurdoch).<br/>**Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+> **Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
 
 ### COVID-19 Government Response Stringency Index
 ```{r}
@@ -303,10 +301,10 @@ renderPlot({
   ggplot(stringency_index,  aes(x = Date, y = Stringency, colour = Country, label = Country, group = Country)) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
     geom_line(size = 1) +
-    scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0","Netherlands" = "#24796C", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
-    scale_x_date(expand = c(0.005, 0.4), date_labels = "%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100)) +
-    labs(x = NULL, y = "Stringency Index (0 = no measures)", title = NULL, subtitle = NULL, caption = NULL) + 
+    scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
+    scale_x_date(expand = c(0.005, 0.005), date_labels = "%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100), position = "right") +
+    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
     theme_minimal(base_size = 16) +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
@@ -315,7 +313,7 @@ renderPlot({
           axis.title.y = element_text(size = 12),
           axis.text.x = element_text(angle = 90, hjust = 1)) +
     guides(colour = FALSE) +
-    facet_wrap(~Country, nrow = 1)
+    facet_wrap(~Country)
   
 }, execOnResize = TRUE)   
 ```

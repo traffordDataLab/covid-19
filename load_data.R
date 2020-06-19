@@ -44,18 +44,16 @@ uk_data <- ecdc %>%
 # URL: https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
 
 country_data <- ecdc %>% 
-  select(dateRep, countriesAndTerritories, deaths) %>% 
-  filter(countriesAndTerritories %in% c("France", "Italy", "Germany", "Netherlands", 
+  select(dateRep, countriesAndTerritories, cases) %>% 
+  filter(countriesAndTerritories %in% c("France", "Italy", "Germany", 
                                         "Spain", "Sweden", "United_Kingdom")) %>% 
   mutate(dateRep = as.Date(dateRep, format = "%d/%m/%Y"),
          countriesAndTerritories = case_when(
            countriesAndTerritories == "United_Kingdom" ~ "UK",
            TRUE ~ countriesAndTerritories)) %>% 
+  arrange(countriesAndTerritories, dateRep) %>%
   group_by(countriesAndTerritories) %>% 
-  arrange(dateRep) %>%
-  mutate(total_deaths = cumsum(deaths)) %>% 
-  filter(total_deaths > 99) %>%
-  mutate(days = as.integer(dateRep - min(dateRep))) %>% 
+  mutate(ma_cases = rollmean(cases, 14, align = "right", fill = NA)) %>% 
   ungroup()
 
 # -------------------------------------------
@@ -87,14 +85,13 @@ la_data <- st_read("data/lad.geojson") %>%
 # URL: https://www.bsg.ox.ac.uk/research/research-projects/coronavirus-government-response-tracker
 
 stringency_index <- read_csv("https://github.com/OxCGRT/covid-policy-tracker/raw/master/data/OxCGRT_latest.csv") %>%  
-  filter(CountryCode %in% c("DEU", "ESP", "FRA", "ITA", "NLD", "SWE", "GBR")) %>% 
+  filter(CountryCode %in% c("DEU", "ESP", "FRA", "ITA", "SWE", "GBR")) %>% 
   mutate(Date = as.Date(as.character(Date), format = "%Y%m%d"),
          Country = case_when(
            CountryCode == "DEU" ~ "Germany", 
            CountryCode == "ESP" ~ "Spain", 
            CountryCode == "FRA" ~ "France", 
            CountryCode == "ITA" ~ "Italy", 
-           CountryCode == "NLD" ~ "Netherlands", 
            CountryCode == "SWE" ~ "Sweden", 
            CountryCode == "GBR" ~ "UK")) %>% 
   select(Date, Country, Stringency = StringencyIndexForDisplay)
