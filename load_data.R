@@ -64,15 +64,28 @@ country_data <- ecdc %>%
 # Source: Public Health England
 # URL: https://coronavirus.data.gov.uk/#local-authorities
 
-phe <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
-  filter(`Area type` == "Lower tier local authority", 
-         `Specimen date` >= max(`Specimen date`) - days(7)) %>% 
-  mutate(date = max(`Specimen date`)) %>% 
-  group_by(`Area code`, `Area name`, date) %>% 
-  summarise(cum_cases = sum(`Daily lab-confirmed cases`)) %>% 
-  select(area_code = `Area code`, date, cum_cases) 
+# NB PHE state that only cases older than 5 days are 'complete' 
+# https://coronavirus.data.gov.uk/about
 
-la_data <- st_read("data/lad.geojson") %>% 
+phe <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
+  filter(`Area type` == "Lower tier local authority") %>%
+  mutate(`Specimen date` = as.Date(`Specimen date`, format = "%Y-%m-%d")) %>% 
+  select(date = `Specimen date`,
+         area_code = `Area code`,
+         area_name = `Area name`,
+         new_cases = `Daily lab-confirmed cases`) %>% 
+  arrange(date) %>% 
+  group_by(area_code, area_name) %>%
+  complete(date = seq.Date(min(date), max(date), by = "day")) %>% 
+  mutate(new_cases = replace_na(new_cases, 0)) %>% 
+  ungroup() %>% 
+  fill(area_name) %>% 
+  filter(date >= max(date)-days(11) & date <= max(date)-days(5)) %>% 
+  mutate(weekending = max(date)) %>% 
+  group_by(area_code, weekending) %>% 
+  summarise(recent_cases = sum(new_cases))
+
+la_data <- st_read("data/ltla.geojson") %>% 
   left_join(phe, by = "area_code") %>% 
   filter(!is.na(long)) %>% 
   select(area_code, area_name, everything()) 

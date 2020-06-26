@@ -10,7 +10,7 @@ library(tidyverse) ; library(sf) ; library(readxl) ; library(httr)
 
 # NB dissolve polygons for Cornwall and Isles of Scilly
 
-lad <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson") %>% 
+ltla <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson") %>% 
   select(area_code = lad19cd, area_name = lad19nm, long, lat, st_areashape) %>% 
   filter(str_detect(area_code, "^E")) %>% 
   mutate(area_code = as.character(area_code),
@@ -27,7 +27,7 @@ lad <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643
 # Population estimates
 # ------------------------------------------- 
 
-# Mid-2018 population estimates
+# Mid-2019 population estimates
 # Source: Nomis / ONS
 # URL: https://www.nomisweb.co.uk/datasets/pestsyoala
 
@@ -43,5 +43,5 @@ population <- population <- read_csv("http://www.nomisweb.co.uk/api/v01/dataset/
 
 # write as GeoJSON
 
-left_join(lad, population, by = "area_code") %>% 
-  st_write("lad.geojson")
+left_join(ltla, population, by = "area_code") %>%
+  st_write("ltla.geojson")

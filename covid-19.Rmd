@@ -191,7 +191,7 @@ output$deaths_plot <- renderPlotly({
         geom_hline(yintercept = 1, size = 0.3, colour = "#333333") +
         geom_line(colour = "#8D2313", size = 1) +
         scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-        scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1)) +
+        scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), limits = c(NA, 100000), labels = comma_format(accuracy = 1)) +
         geom_line(aes(x = Date, y = doubling_2_day), colour = "#bdbdbd", lty = 3) +
         geom_line(aes(x = Date, y = doubling_3_day), colour = "#bdbdbd", lty = 3) +
         geom_line(aes(x = Date, y = doubling_1_week), colour = "#bdbdbd", lty = 3) +
@@ -219,18 +219,18 @@ output$deaths_plot <- renderPlotly({
 Maps {data-navmenu="UK"}
 =======================================================================
 
-### New confirmed cases in last 7 days
+### New confirmed cases during week ending `r format(unique(la_data$weekending), '%A %d %B')`
 ```{r}
-cumulative_cases <- la_data %>% 
-  mutate(popup = str_c("<strong>", area_name, "</strong><br/><strong>", cum_cases, "</strong> confirmed cases<br/>to ", format(date, "%d %B")) %>% map(HTML))
+recent_cases <- la_data %>% 
+  mutate(popup = str_c("<strong>", area_name, "</strong><br/><strong>", recent_cases, "</strong> confirmed cases<br/>", format(unique(la_data$weekending)-days(6), "%d %B"), " - ", format(unique(la_data$weekending), "%d %B")) %>% map(HTML))
 
 renderLeaflet({
   leaflet() %>%
   setView(-2.07811, 53.23497, zoom = 7) %>% 
   addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
            attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
-  addPolygons(data = cumulative_cases, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd")  %>% 
-  addCircleMarkers(data = cumulative_cases, lng = ~long, lat = ~lat, radius = ~sqrt(cum_cases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
+  addPolygons(data = recent_cases, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd")  %>% 
+  addCircleMarkers(data = recent_cases, lng = ~long, lat = ~lat, radius = ~sqrt(recent_cases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
   addFullscreenControl() %>% 
   addResetMapButton() %>% 
   onRender(
@@ -238,13 +238,13 @@ renderLeaflet({
 })
 ```
 
-> **Notes**: 1) The size of the circles are proportional to the number of confirmed cases over the last seven days in each local authority district. 2) Confirmed cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
+> **Notes**: 1) The size of the circles are proportional to the number of confirmed cases during the week ending `r format(unique(la_data$weekending), '%A %d %B %Y')` in each local authority district. 2) There is a lag in the data shown because Public Health England [state](https://coronavirus.data.gov.uk/about) that reported cases within the last 5 days are considered 'incomplete'. 3) Confirmed cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
 
-### Rate of new confirmed cases in last 7 days
+### Rate of new confirmed cases during week ending `r format(unique(la_data$weekending), '%A %d %B')`
 ```{r}
 infection_rate <- la_data %>%
-  mutate(rate = round(cum_cases/population*100000,0),
-         popup = str_c("<strong>", area_name, "</strong><br/><strong>", rate, "</strong> cases per 100,000 residents<br/>to ", format(date, "%d %B")) %>% map(HTML))
+  mutate(rate = round(recent_cases/population*100000,0),
+         popup = str_c("<strong>", area_name, "</strong><br/><strong>", rate, "</strong> cases per 100,000 residents<br/>", format(unique(la_data$weekending)-days(6), "%d %B"), " - ", format(unique(la_data$weekending), "%d %B")) %>% map(HTML))
 
 renderLeaflet({
   breaks <- classIntervals(infection_rate$rate, n = 5, style = "jenks")$brks
@@ -263,7 +263,7 @@ renderLeaflet({
 })
 ```
 
-> **Notes**: The rate of cases is calculated by dividing the cumulative number of cases over the last seven days by the mid-2018 estimate of the resident population of each local authority multiplied by 100,000.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk) | [Nomis / ONS](https://www.nomisweb.co.uk/datasets/pestsyoala)
+> **Notes**: 1) The rate of cases is calculated by dividing the total number of cases reported during the week ending `r format(unique(la_data$weekending), '%A %d %B %Y')` by the mid-2019 estimate of the resident population of each local authority multiplied by 100,000. 2) There is a lag in the data shown because Public Health England [state](https://coronavirus.data.gov.uk/about) that reported cases within the last 5 days are considered 'incomplete'.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk) | [Nomis / ONS](https://www.nomisweb.co.uk/datasets/pestsyoala)
 
 Europe 
 =======================================================================
