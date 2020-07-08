@@ -42,7 +42,7 @@ Row
 renderPlotly({
   
   daily_cases <- uk_data %>% 
-    mutate(ma_cases = rollmean(NewCases, 7, align = "right", fill = NA))
+    mutate(ma_cases = rollmean(NewCases, 7, align = "center", fill = NA))
   
   p <- ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
@@ -127,7 +127,7 @@ renderPlotly({
   
   daily_deaths <- uk_data %>% 
     filter(Date >= "2020-03-06") %>% 
-    mutate(ma_deaths = rollmean(NewDeaths, 7, align = "right", fill = NA))
+    mutate(ma_deaths = rollmean(NewDeaths, 7, align = "center", fill = NA))
   
   p <- ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
@@ -238,7 +238,7 @@ renderLeaflet({
 })
 ```
 
-> **Notes**: 1) The size of the circles are proportional to the number of confirmed cases during the week ending `r format(unique(la_data$weekending), '%A %d %B %Y')` in each local authority district. 2) There is a lag in the data shown because Public Health England [state](https://coronavirus.data.gov.uk/about) that reported cases within the last 5 days are considered 'incomplete'. 3) Confirmed cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
+> **Notes**: 1) The size of the circles are proportional to the number of confirmed cases during the week ending `r format(unique(la_data$weekending), '%A %d %B %Y')` in each local authority district. 2) There is a lag in the data shown because Public Health England [state](https://coronavirus.data.gov.uk/about) that reported cases within the last 5 days are considered 'incomplete'. 3) Confirmed cases for Hackney and the City of London are combined and cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
 
 ### Rate of new confirmed cases during week ending `r format(unique(la_data$weekending), '%A %d %B')`
 ```{r}

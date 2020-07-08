@@ -29,7 +29,7 @@ uk_data <- ecdc %>%
   filter(countriesAndTerritories == "United_Kingdom") %>% 
   select(Date = dateRep, NewCases = cases, NewDeaths = deaths) %>% 
   arrange(Date) %>% 
-  mutate(Date = as.Date(Date, format = "%d/%b/%Y")-1,
+  mutate(Date = as.Date(Date, format = "%d/%b/%Y"),
          NewCases = as.integer(NewCases),
          NewDeaths = as.integer(NewDeaths),
          CumCases = cumsum(NewCases),

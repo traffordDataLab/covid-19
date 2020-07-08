@@ -14,11 +14,24 @@ ltla <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de0764
   select(area_code = lad19cd, area_name = lad19nm, long, lat, st_areashape) %>% 
   filter(str_detect(area_code, "^E")) %>% 
   mutate(area_code = as.character(area_code),
-         area_code = case_when(area_code %in% c("E06000052", "E06000053") ~ "E06000052", TRUE ~ area_code),
          area_name = as.character(area_name),
-         area_name = case_when(area_code == "E06000052" ~ "Cornwall and Isles of Scilly", TRUE ~ area_name),
-         long = case_when(area_code == "E06000052" ~ -4.64249, TRUE ~ long),
-         lat = case_when(area_code == "E06000052" ~ 50.45023, TRUE ~ lat)) %>% 
+         area_name = case_when(
+           area_name %in% c("Cornwall", "Isles of Scilly") ~ "Cornwall and Isles of Scilly",
+           area_name %in% c("City of London", "Hackney") ~ "Hackney and City of London", 
+           TRUE ~ area_name),
+         area_code = case_when(
+           area_name == "Cornwall and Isles of Scilly" ~ "E06000052",
+           area_name == "Hackney and City of London" ~ "E09000012",
+           TRUE ~ area_code),
+         long = case_when(
+           area_name == "Cornwall and Isles of Scilly" ~ -4.64249,
+           area_name == "Hackney and City of London" ~ -0.06045,
+           TRUE ~ long),
+         lat = case_when(
+           area_name == "Cornwall and Isles of Scilly" ~ 50.45023,
+           area_name == "Hackney and City of London" ~ 51.55492,
+           TRUE ~ lat)
+         ) %>% 
   group_by(area_name, area_code, long, lat) %>% 
   summarise(st_areashape = sum(st_areashape)) %>% 
   select(-st_areashape)
@@ -35,7 +48,9 @@ ltla <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de0764
 
 population <- population <- read_csv("http://www.nomisweb.co.uk/api/v01/dataset/NM_2002_1.data.csv?geography=1820327937...1820328318&date=latest&gender=0&c_age=200&measures=20100&select=geography_code,obs_value") %>%  
   rename(area_code = GEOGRAPHY_CODE, population = OBS_VALUE) %>% 
-  mutate(area_code = case_when(as.character(area_code) %in% c("E06000052", "E06000053") ~ "E06000052", TRUE ~ area_code)) %>% 
+  mutate(area_code = case_when(as.character(area_code) %in% c("E06000052", "E06000053") ~ "E06000052", 
+                               as.character(area_code) %in% c("E09000001", "E09000012") ~ "E09000012",
+                               TRUE ~ area_code)) %>% 
   group_by(area_code) %>% 
   summarise(population = sum(population))
 
