@@ -46,7 +46,7 @@ renderPlotly({
   
   p <- ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(data = daily_cases, aes(x = Date, y = NewCases, text = paste0("<b>", comma(NewCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B"))), fill = "#39809E", alpha = 0.6) +
+    geom_col(data = daily_cases, aes(x = Date, y = NewCases, text = paste0("<b>", format(Date, "%d %B"), "</b><br>New cases: ", comma(NewCases, accuracy = 1), "<br>7-day average: ", comma(ma_cases, accuracy = 1))), fill = "#39809E", alpha = 0.6) +
     geom_line(data = daily_cases, aes(x = Date, y = ma_cases, text = "7 day rolling average"), colour = "#39809E", size = 1) +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
@@ -73,7 +73,7 @@ fillCol(flex = c(NA, 1),
         )
 
 output$cases_plot <- renderPlotly({
-  p <- ggplot(uk_data, aes(x = Date, y = CumCases, group = 1, text = paste0("<b>", comma(CumCases, accuracy = 1), "</b> cases<br>", format(Date, "%d %B")))) +
+  p <- ggplot(uk_data, aes(x = Date, y = CumCases, group = 1, text = paste0("<b>", format(Date, "%d %B"), "</b><br>Total cases: ", comma(CumCases, accuracy = 1)))) +
     geom_line(colour = "#39809E", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
     labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
@@ -131,7 +131,7 @@ renderPlotly({
   
   p <- ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(data = daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", comma(NewDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B"))), fill = "#8D2313", alpha = 0.6) +
+    geom_col(data = daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", format(Date, "%d %B"), "</b><br>New deaths: ", comma(NewDeaths, accuracy = 1), "<br>7-day average: ", comma(ma_deaths, accuracy = 1))), fill = "#8D2313", alpha = 0.6) +
     geom_line(data = daily_deaths, aes(x = Date, y = ma_deaths, text = "7 day rolling average"), colour = "#8D2313", size = 1) +
     scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
@@ -160,7 +160,7 @@ fillCol(flex = c(NA, 1),
 output$deaths_plot <- renderPlotly({
   if (input$deaths_scale == "Linear") {
     
-    p <- ggplot(filter(uk_data, Date >= "2020-03-06"), aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", comma(CumDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
+    p <- ggplot(filter(uk_data, Date >= "2020-03-06"), aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", format(Date, "%d %B"), "</b><br>Total deaths: ", comma(CumDeaths, accuracy = 1)))) +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +  
     geom_line(colour = "#8D2313", size = 1) +
     scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
@@ -187,7 +187,7 @@ output$deaths_plot <- renderPlotly({
                doubling_1_week = 1*(1+((2^(1/7))-1))^(days))
       
       p <- ggplot(temp, aes(x = Date, y = CumDeaths, group = 1, 
-                          text = paste0("<b>", comma(CumDeaths, accuracy = 1), "</b> deaths<br>", format(Date, "%d %B")))) +
+                          text = paste0("<b>", format(Date, "%d %B"), "</b><br>Total deaths: ", comma(CumDeaths, accuracy = 1)))) +
         geom_hline(yintercept = 1, size = 0.3, colour = "#333333") +
         geom_line(colour = "#8D2313", size = 1) +
         scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
