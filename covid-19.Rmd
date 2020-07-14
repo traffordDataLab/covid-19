@@ -80,7 +80,7 @@ df <- cases %>%
   ungroup() 
 
 # table data
-tbl <- select(df, area_name, current_week_rate, previous_week_rate, change_rate)
+tbl <- select(df, area_name, previous_week_rate, current_week_rate, change_rate)
 
 # map data
 sf <- ltla %>% 
@@ -127,10 +127,10 @@ output$table <- renderReactable({
               area_name = colDef(name = "Local authority",
                                  filterable = TRUE,
                                  align = "left"),
-              current_week_rate = colDef(header = paste(format(max(cases$date)-days(11),'%d %B'),"-", format(max(cases$date)-days(5),'%d %B')), 
-                                         align = "left"),
               previous_week_rate = colDef(header =  paste(format(max(cases$date)-days(18),'%d %B'),"-", format(max(cases$date)-days(12),'%d %B')),
                                           align = "left"),
+              current_week_rate = colDef(header = paste(format(max(cases$date)-days(11),'%d %B'),"-", format(max(cases$date)-days(5),'%d %B')), 
+                                         align = "left"),
               change_rate = colDef(name = "Change",
                                    style = function(value) {
                                      if (value > 0) {
