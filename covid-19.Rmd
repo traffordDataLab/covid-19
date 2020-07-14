@@ -1,324 +1,233 @@
 ---
-title: "COVID-19 UK monitor"
+title: "COVID-19 monitor"
 output: 
   flexdashboard::flex_dashboard:
     theme: lumen
-    orientation: rows
-    vertical_layout: fill
+    orientation: columns
     logo: logo.png
     source_code: https://github.com/traffordDataLab/covid-19
     social: ["twitter"]
-    css: styles.css
 runtime: shiny
 ---
 
+```{css}
+@import url('https://fonts.googleapis.com/css?family=Open+Sans');
+
+@font-face {
+  font-family: 'Open Sans', sans-serif;
+}
+
+div {
+  font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .header {
+  font-family: 'Open Sans', sans-serif;
+}
+
+a {
+  color: #39809E;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #39809E;
+  text-decoration: underline;
+}
+
+div.about { 
+  font-size: 1.1em;
+  font-family: 'Open Sans', sans-serif;
+  padding: 20px;
+}
+
+.navbar-logo {
+     max-width:48px;
+     max-height:48px;
+}
+
+.tbl {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.rt-select-input{
+  opacity: 0;
+}
+```
+
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(httr) ; library(htmlwidgets) ; library(htmltools) ; library(zoo) ; library(scales) ; library(plotly) ; library(classInt) ; library(leaflet) ; library(leaflet.extras) ; library(shadowtext)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(sf) ; library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(reactable) ; library(lubridate) ; library(zoo) ; library(scales) ; library(ggtext)
 
-source("load_data.R")
+source("global.R")
+
+df <- cases %>% 
+  mutate(period = case_when(
+    date >= max(date)-days(11) & date <= max(date)-days(5) ~ "current_week",
+    date >= max(date)-days(18) & date <= max(date)-days(12) ~ "previous_week"
+  )) %>% 
+  filter(!is.na(period)) %>% 
+  select(-date) %>%
+  group_by(area_code, area_name, period) %>% 
+  summarise(total_cases = sum(new_cases)) %>% 
+  pivot_wider(names_from = period, values_from = total_cases) %>% 
+  select(area_code, area_name, previous_week, current_week) %>%
+  left_join(population, by = "area_code") %>% 
+  mutate(previous_week_rate = round(previous_week/population*100000,1),
+         current_week_rate = round(current_week/population*100000,1),
+         change = current_week-previous_week,
+         change_rate = round(change/population*100000,1)) %>% 
+  ungroup() 
+
+# table data
+tbl <- select(df, area_name, current_week_rate, previous_week_rate, change_rate)
+
+# map data
+sf <- ltla %>% 
+  left_join(df, by = "area_code") %>% 
+  mutate(popup = str_c("<strong>", area_name, "</strong><br/>", paste(format(max(cases$date)-days(11),'%d %B'),"-", format(max(cases$date)-days(5),'%d %B')),":<strong> ", current_week, "</strong><br/>", paste(format(max(cases$date)-days(18),'%d %B'),"-", format(max(cases$date)-days(12),'%d %B')), ":<strong> ", previous_week, "</strong><br/>Change:<strong> ", change, "</strong>") %>% map(HTML),
+         colour = case_when(change > 0 ~ "#C71E1D", change < 0 ~ "#00846C", TRUE ~ "#777"))
+```
+```{r, reactive}
+selected <- reactive(getReactableState("table", "selected"))
 ```
 
-Cases {data-navmenu="UK"}
+Dashboard
 =======================================================================
 
-Row
--------------------------------------
+Column {data-width=500}
+-----------------------------------------------------------------------
 
-### <strong>New confirmed UK cases</strong><br/><small>as of `r format(max(uk_data$Date), '%A %d %B %Y')`</small>
-```{r}
-valueBox(comma(pull(filter(uk_data, Date == max(Date)), NewCases)), color = "#39809E")
-```
-
-### <strong>Total confirmed UK cases</strong><br/><small>as of `r format(max(uk_data$Date), '%A %d %B %Y')`</small>
-```{r}
-valueBox(comma(max(uk_data$CumCases)), color = "#39809E")
-```
-
-Row
--------------------------------------
-
-### Daily confirmed cases
-```{r}
-renderPlotly({
-  
-  daily_cases <- uk_data %>% 
-    mutate(ma_cases = rollmean(NewCases, 7, align = "center", fill = NA))
-  
-  p <- ggplot() +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(data = daily_cases, aes(x = Date, y = NewCases, text = paste0("<b>", format(Date, "%d %B"), "</b><br>New cases: ", comma(NewCases, accuracy = 1), "<br>7-day average: ", comma(ma_cases, accuracy = 1))), fill = "#39809E", alpha = 0.6) +
-    geom_line(data = daily_cases, aes(x = Date, y = ma_cases, text = "7 day rolling average"), colour = "#39809E", size = 1) +
-    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank()) 
-  
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE))  
-})
-```
-
-> **Notes**: 1) Confirmed cases are recorded up to 9am on `r format(max(uk_data$Date), '%A %d %B %Y')`. 2) There is likely to be a lag of a few days between initial testing and the reporting of test results. 3) The number of *confirmed* cases is likely to be much lower than the *total* number of cases because not all people who report symptoms of coronavirus are being tested.<br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
- 
-### Cumulative confirmed cases
+###
 ```{r}
 fillCol(flex = c(NA, 1),
-        radioButtons("cases_scale", label = NULL, choices = c("Linear", "Logarithmic"), selected = "Linear", inline = TRUE),
-        plotlyOutput("cases_plot", height = "100%")
-        )
+  HTML("<p style = 'color: #757575;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases per 100,000</p>"),
+  reactableOutput("table", height = "100%")
+)
 
-output$cases_plot <- renderPlotly({
-  p <- ggplot(uk_data, aes(x = Date, y = CumCases, group = 1, text = paste0("<b>", format(Date, "%d %B"), "</b><br>Total cases: ", comma(CumCases, accuracy = 1)))) +
-    geom_line(colour = "#39809E", size = 1) +
-    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank())
+output$table <- renderReactable({
   
-  if (input$cases_scale == "Linear") {
-    
-    p <- p + geom_hline(yintercept = 0, size = 0.3, colour = "#333333") + scale_y_continuous(expand = c(0.005, 0.005), labels = comma)
-    
+  reactable(tbl, 
+            selection = "single", 
+            onClick = "select", 
+            highlight = TRUE, 
+            rowStyle = list(cursor = "pointer"),
+            paginationType = "simple",
+            height = "auto",
+            compact = TRUE,
+            borderless = FALSE,
+            wrap = FALSE,
+            resizable = TRUE,
+            searchable = FALSE,
+            defaultSorted = "current_week_rate",
+            defaultSortOrder = "desc",
+            defaultColDef = colDef(align = "left"),
+            theme = reactableTheme(rowSelectedStyle = list(backgroundColor = "#eee")),
+            columns = list(
+              area_name = colDef(name = "Local authority",
+                                 filterable = TRUE,
+                                 align = "left"),
+              current_week_rate = colDef(header = paste(format(max(cases$date)-days(11),'%d %B'),"-", format(max(cases$date)-days(5),'%d %B')), 
+                                         align = "left"),
+              previous_week_rate = colDef(header =  paste(format(max(cases$date)-days(18),'%d %B'),"-", format(max(cases$date)-days(12),'%d %B')),
+                                          align = "left"),
+              change_rate = colDef(name = "Change",
+                                   style = function(value) {
+                                     if (value > 0) {
+                                       color <- "#C71E1D"
+                                       } else if (value < 0) {
+                                         color <- "#00846C"
+                                         } else {
+                                           color <- "#777"
+                                           }
+                                     list(color = color, fontWeight = "bold")
+                                     },
+                                     align = "left"))
+            )
+  
+  })
+```
+
+###
+```{r}
+uiOutput("chartUI")
+
+output$chartUI <- renderUI({
+  if (is.null(selected())) {
+    div(HTML("Please <strong>select a local authority</strong> from the table to show a chart of daily confirmed cases")) 
     } else {
-      
-      p <- p + geom_hline(yintercept = 1, size = 0.3, colour = "#333333") + scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), labels = comma_format(accuracy = 1))
-      
-    }
+      plotOutput("chart")
+      }
+  })
+
+output$chart <- renderPlot({
   
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) 
+  id <- tbl[selected(), ]$area_name
+  selected_cases <- filter(cases, area_name == id) %>% 
+      mutate(ma_cases = rollmean(new_cases, 7, align = "left", fill = NA))
   
-})
-```
-
-> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
-
-Deaths {data-navmenu="UK"}
-=======================================================================
-
-Row
--------------------------------------
-
-### <strong>New confirmed UK deaths</strong><br/><small>as of `r format(max(uk_data$Date), '%A %d %B %Y')`</small>
-```{r}
-valueBox(comma(pull(filter(uk_data, Date == max(Date)), NewDeaths)), color = "#8D2313")
-```
-
-### <strong>Total confirmed UK deaths</strong><br/><small>as of `r format(max(uk_data$Date), '%A %d %B %Y')`</small>
-```{r}
-valueBox(comma(max(uk_data$CumDeaths)), color = "#8D2313")
-```
-
-Row
--------------------------------------
-
-### Daily confirmed deaths
-```{r}
-renderPlotly({
-  
-  daily_deaths <- uk_data %>% 
-    filter(Date >= "2020-03-06") %>% 
-    mutate(ma_deaths = rollmean(NewDeaths, 7, align = "center", fill = NA))
-  
-  p <- ggplot() +
+  ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(data = daily_deaths, aes(x = Date, y = NewDeaths, text = paste0("<b>", format(Date, "%d %B"), "</b><br>New deaths: ", comma(NewDeaths, accuracy = 1), "<br>7-day average: ", comma(ma_deaths, accuracy = 1))), fill = "#8D2313", alpha = 0.6) +
-    geom_line(data = daily_deaths, aes(x = Date, y = ma_deaths, text = "7 day rolling average"), colour = "#8D2313", size = 1) +
-    scale_x_date(expand = c(0.005, 0.005), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-    theme_minimal() +
+    geom_col(data = selected_cases, aes(x = date, y = new_cases), fill = "#bdbdbd", colour = NA, width = 0.8, alpha = 0.7) +
+    geom_line(data = selected_cases, aes(x = date, y = ma_cases, colour = "ma_cases"), size = 1, alpha = 1) +
+    scale_colour_manual(values = c("ma_cases" = "#212121"), name = NULL, labels = "7-day average") +
+    scale_x_date(date_labels = "%d-%b") +
+    scale_y_continuous(expand = c(0.005, 0.005), breaks = function(x) unique(
+        floor(pretty(seq(0, (max(x) + 1) * 1.1)))), position = "right") +
+    labs(x = NULL, y = NULL,
+       title = "Daily confirmed cases",
+       subtitle = paste0("<span style = 'color:#757575;'>", id, ", to ", format(max(cases$date), '%d %B %Y'), "</span>"),
+       caption = "Source: Public Health England") +
+    theme_minimal(base_size = 14) +
     theme(plot.margin = unit(rep(0.5, 4), "cm"),
           panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank()) 
-  
-  ggplotly(p, tooltip = "text") %>%
-    config(displayModeBar = FALSE) %>% 
-    layout(xaxis = list(fixedrange = TRUE)) %>%
-    layout(yaxis = list(fixedrange = TRUE)) 
-})
-```
-
-> **Notes**: 1) Deaths are recorded up to 5pm on `r format(max(uk_data$Date)-1, '%A %d %B %Y')`. 2) The date of a death refers to the day the death was reported not the actual date of the death. 3) The number of deaths only includes those who tested positive for coronavirus. 4) The deaths reported cover all settings not just hospitals. <br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
-
-### Cumulative confirmed deaths
-```{r}
-fillCol(flex = c(NA, 1),
-        radioButtons("deaths_scale", label = NULL, choices = c("Linear", "Logarithmic"), selected = "Linear", inline = TRUE),
-        plotlyOutput("deaths_plot", height = "100%")
-        )
-
-output$deaths_plot <- renderPlotly({
-  if (input$deaths_scale == "Linear") {
-    
-    p <- ggplot(filter(uk_data, Date >= "2020-03-06"), aes(x = Date, y = CumDeaths, group = 1, text = paste0("<b>", format(Date, "%d %B"), "</b><br>Total deaths: ", comma(CumDeaths, accuracy = 1)))) +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +  
-    geom_line(colour = "#8D2313", size = 1) +
-    scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), labels = comma) +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-    theme_minimal() +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank())
-    
-    ggplotly(p, tooltip = "text") %>%
-      config(displayModeBar = FALSE) %>% 
-      layout(xaxis = list(fixedrange = TRUE)) %>%
-      layout(yaxis = list(fixedrange = TRUE)) 
-    
-    } else {
-      
-      temp <- filter(uk_data, Date >= "2020-03-06") %>% 
-        arrange(Date) %>% 
-        filter(CumDeaths > 0) %>%
-        mutate(days = as.integer(Date - min(Date)),
-               doubling_2_day = 1*(1+((2^(1/2))-1))^(days),
-               doubling_3_day = 1*(1+((2^(1/3))-1))^(days),
-               doubling_1_week = 1*(1+((2^(1/7))-1))^(days))
-      
-      p <- ggplot(temp, aes(x = Date, y = CumDeaths, group = 1, 
-                          text = paste0("<b>", format(Date, "%d %B"), "</b><br>Total deaths: ", comma(CumDeaths, accuracy = 1)))) +
-        geom_hline(yintercept = 1, size = 0.3, colour = "#333333") +
-        geom_line(colour = "#8D2313", size = 1) +
-        scale_x_date(expand = c(0.005, 0.4), date_labels = "%d-%b") +
-        scale_y_continuous(trans = "log10", expand = c(0.005, 0.005), limits = c(NA, 100000), labels = comma_format(accuracy = 1)) +
-        geom_line(aes(x = Date, y = doubling_2_day), colour = "#bdbdbd", lty = 3) +
-        geom_line(aes(x = Date, y = doubling_3_day), colour = "#bdbdbd", lty = 3) +
-        geom_line(aes(x = Date, y = doubling_1_week), colour = "#bdbdbd", lty = 3) +
-        labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) +
-        theme_minimal() +
-        theme(plot.margin = unit(rep(0.5, 4), "cm"),
-              panel.grid.major.x = element_blank(),
-              panel.grid.minor = element_blank())
-      
-      ggplotly(p, tooltip = "text") %>%
-        config(displayModeBar = FALSE) %>% 
-        layout(xaxis = list(fixedrange = TRUE)) %>%
-        layout(yaxis = list(fixedrange = TRUE)) %>%
-        style(text = "Doubling every 2 days", traces = 3) %>%
-        style(text = "Doubling every 3 days", traces = 4) %>% 
-        style(text = "Doubling every week", traces = 5)
-      
-    }
-
-})
-```
-
-> **Notes**: Logarithmic scales represent an exponential curve as a straight line. The steeper the line the faster the rate of growth.<br/>**Source**: [European Centre for Disease Prevention and Control](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
-
-Maps {data-navmenu="UK"}
-=======================================================================
-
-### New confirmed cases during week ending `r format(unique(la_data$weekending), '%A %d %B')`
-```{r}
-recent_cases <- la_data %>% 
-  mutate(popup = str_c("<strong>", area_name, "</strong><br/><strong>", recent_cases, "</strong> confirmed cases<br/>", format(unique(la_data$weekending)-days(6), "%d %B"), " - ", format(unique(la_data$weekending), "%d %B")) %>% map(HTML))
-
-renderLeaflet({
-  leaflet() %>%
-  setView(-2.07811, 53.23497, zoom = 7) %>% 
-  addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
-           attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
-  addPolygons(data = recent_cases, fillColor = "#EAEAEA", fillOpacity = 0.3, weight = 1, color = "#bdbdbd")  %>% 
-  addCircleMarkers(data = recent_cases, lng = ~long, lat = ~lat, radius = ~sqrt(recent_cases), fillColor = "#57AACB", fillOpacity = 0.8, weight = 1, color = "#FFFFFF", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
-  addFullscreenControl() %>% 
-  addResetMapButton() %>% 
-  onRender(
-    paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
-})
-```
-
-> **Notes**: 1) The size of the circles are proportional to the number of confirmed cases during the week ending `r format(unique(la_data$weekending), '%A %d %B %Y')` in each local authority district. 2) There is a lag in the data shown because Public Health England [state](https://coronavirus.data.gov.uk/about) that reported cases within the last 5 days are considered 'incomplete'. 3) Confirmed cases for Hackney and the City of London are combined and cases for Cornwall and Isles of Scilly are combined.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk)
-
-### Rate of new confirmed cases during week ending `r format(unique(la_data$weekending), '%A %d %B')`
-```{r}
-infection_rate <- la_data %>%
-  mutate(rate = round(recent_cases/population*100000,0),
-         popup = str_c("<strong>", area_name, "</strong><br/><strong>", rate, "</strong> cases per 100,000 residents<br/>", format(unique(la_data$weekending)-days(6), "%d %B"), " - ", format(unique(la_data$weekending), "%d %B")) %>% map(HTML))
-
-renderLeaflet({
-  breaks <- classIntervals(infection_rate$rate, n = 5, style = "jenks")$brks
-  pal <- colorBin(palette = "Blues", domain = NULL, bins = breaks, na.color = "#D7D8D7")
-
-  leaflet(data = filter(infection_rate, rate != 0)) %>%
-    setView(-2.07811, 53.23497, zoom = 7) %>%
-    addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a> | Data: <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>') %>%
-    addPolygons(data = filter(infection_rate, rate == 0), fillColor = "#FFFFFF", fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 0.5, color = "#bdbdbd", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto"), highlightOptions = highlightOptions(color = "#212121", weight = 2, bringToFront = TRUE)) %>% 
-    addPolygons(fillColor = ~pal(rate), fillOpacity = 0.8, smoothFactor = 0.5, stroke = TRUE, weight = 0.5, color = "#bdbdbd", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto"), highlightOptions = highlightOptions(color = "#212121", weight = 2, bringToFront = TRUE)) %>%
-    addLegend(pal = pal, values = ~rate, opacity = 0.7, title = "Rate per 100,000 residents", position = "bottomright") %>%
-    addFullscreenControl() %>%
-    addResetMapButton() %>%
-    onRender(
-      paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
-})
-```
-
-> **Notes**: 1) The rate of cases is calculated by dividing the total number of cases reported during the week ending `r format(unique(la_data$weekending), '%A %d %B %Y')` by the mid-2019 estimate of the resident population of each local authority multiplied by 100,000. 2) There is a lag in the data shown because Public Health England [state](https://coronavirus.data.gov.uk/about) that reported cases within the last 5 days are considered 'incomplete'.<br/>**Source**: [Public Health England](https://coronavirus.data.gov.uk) | [Nomis / ONS](https://www.nomisweb.co.uk/datasets/pestsyoala)
-
-Europe 
-=======================================================================
-
-Row
--------------------------------------
-
-### Daily new confirmed cases, 7-day moving average
-```{r}
-renderPlot({
-  
-  ggplot(country_data, aes(x = dateRep, y = ma_cases, color = countriesAndTerritories, label = countriesAndTerritories, group = countriesAndTerritories)) + 
-  geom_hline(yintercept = 00, size = 0.3, colour = "#333333") +
-  geom_line(size = 1) + 
-  geom_shadowtext(data = . %>% group_by(countriesAndTerritories) %>% top_n(1, ma_cases), aes(label = paste0(" ", countriesAndTerritories)), size = 5, hjust = 0, vjust = 0, bg.color = "white") +
-  scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
-  scale_x_date(expand = c(0, 30), date_labels = "%b") +
-  scale_y_continuous(expand = expansion(add = c(0,0.1)), labels = comma, position = "right") +
-  labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
-  theme_minimal(base_size = 16) +
-  theme(plot.margin = unit(rep(0.5, 4), "cm"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor = element_blank()) +
-  guides(colour = FALSE) +
-  coord_cartesian(clip = "off")
+          panel.grid.minor = element_blank(),
+          plot.title.position = "plot",
+          plot.title = element_text(colour = "#757575", size = 16, face = "bold"),
+          plot.subtitle = element_markdown(size = 14, margin = margin(b = 20)),
+          plot.caption = element_text(colour = "grey60", margin = margin(t = 20, b = -10)),
+          legend.position = c(0.9, 1.1),
+          legend.direction = "horizontal",
+          legend.text = element_text(size = 12))
   
 }, execOnResize = TRUE) 
 ```
 
-> **Source**: [European Centre for Disease Prevention and Control ](https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide)
+Column {data-width=500}
+-----------------------------------------------------------------------
 
-### COVID-19 Government Response Stringency Index
+###
 ```{r}
-renderPlot({
-  ggplot(stringency_index,  aes(x = Date, y = Stringency, colour = Country, label = Country, group = Country)) +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_line(size = 1) +
-    scale_colour_manual(values = c("France" = "#52BCA3",  "Italy" = "#99C945", "Germany" = "#CC61B0", "Spain" = "#2F8AC4", "Sweden" = "#764E9F", "UK" = "#ED645A")) +
-    scale_x_date(expand = c(0.005, 0.005), date_labels = "%b") +
-    scale_y_continuous(expand = c(0.005, 0.005), limits = c(0,100), position = "right") +
-    labs(x = NULL, y = NULL, title = NULL, subtitle = NULL, caption = NULL) + 
-    theme_minimal(base_size = 16) +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
-          panel.grid.major.x = element_blank(),
-          panel.grid.minor = element_blank(),
-          strip.text.x = element_text(hjust = 0),
-          axis.title.y = element_text(size = 12),
-          axis.text.x = element_text(angle = 90, hjust = 1)) +
-    guides(colour = FALSE) +
-    facet_wrap(~Country)
-  
-}, execOnResize = TRUE)   
-```
+uiOutput("mapUI")
 
-> **Notes**: The [Oxford COVID-19 Government Response Tracker (OxCGRT)](www.bsg.ox.ac.uk/covidtracker) compares government responses to the coronavirus pandemic by creating a composite index of different categories of response. A score of 0 on the Index indicates no measures have been taken.<br/>**Source**: [Blavatnik School of Government, Oxford University](https://www.bsg.ox.ac.uk/research/research-projects/oxford-covid-19-government-response-tracker).
+output$mapUI <- renderUI({
+  if (is.null(selected())) {
+    div(HTML("Please <strong>select a local authority</strong> from the table to visualise it and neighbouring areas on a map")) 
+    } else {
+      fillCol(flex = c(NA, 1),
+              HTML(paste0("<p style = 'color: #757575;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(5)),date)), '%d %B'),"</p>")),
+              leafletOutput("map")
+      )
+      }
+  })
+
+zoom_to <- reactive({
+  id <- tbl[selected(), ]$area_name
+  filter(sf, area_name == id) 
+  })
+
+output$map <- renderLeaflet({
+  
+    leaflet(data = sf, options = leafletOptions(zoomControl = FALSE)) %>%
+    setView(lng = zoom_to()$long, lat = zoom_to()$lat, zoom = 10) %>% 
+    addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a>') %>%
+    addPolygons(data = ltla, fillColor = "transparent", weight = 1, color = "#bdbdbd", opacity = 1) %>% 
+    addPolygons(data = zoom_to(), fillColor = "#bdbdbd", weight = 1, color = "#bdbdbd", opacity = 1) %>% 
+    addCircleMarkers(lng = ~long, lat = ~lat, radius = ~sqrt(current_week), fillColor = ~colour, fillOpacity = 0.3, weight = 1, color = ~colour, opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
+    onRender("function(el, t) {var myMap = this;myMap._container.style['background'] = '#ffffff';}", paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
+  
+  })
+```
 
 About {data-icon="fa-info-circle"}
 =======================================================================

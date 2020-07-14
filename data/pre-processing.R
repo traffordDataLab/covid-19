@@ -1,8 +1,4 @@
-library(tidyverse) ; library(sf) ; library(readxl) ; library(httr)
-
-# -------------------------------------------
-# Geospatial data
-# ------------------------------------------- 
+library(tidyverse) ; library(sf)
 
 # Local Authority Districts in England
 # Source: ONS Open Geography Portal
@@ -10,7 +6,7 @@ library(tidyverse) ; library(sf) ; library(readxl) ; library(httr)
 
 # NB dissolve polygons for Cornwall and Isles of Scilly
 
-ltla <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson") %>% 
+st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson") %>% 
   select(area_code = lad19cd, area_name = lad19nm, long, lat, st_areashape) %>% 
   filter(str_detect(area_code, "^E")) %>% 
   mutate(area_code = as.character(area_code),
@@ -31,32 +27,8 @@ ltla <- st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de0764
            area_name == "Cornwall and Isles of Scilly" ~ 50.45023,
            area_name == "Hackney and City of London" ~ 51.55492,
            TRUE ~ lat)
-         ) %>% 
+  ) %>% 
   group_by(area_name, area_code, long, lat) %>% 
   summarise(st_areashape = sum(st_areashape)) %>% 
-  select(-st_areashape)
-
-# -------------------------------------------
-# Population estimates
-# ------------------------------------------- 
-
-# Mid-2019 population estimates
-# Source: Nomis / ONS
-# URL: https://www.nomisweb.co.uk/datasets/pestsyoala
-
-# NB combine population estimates for Cornwall and Isles of Scilly
-
-population <- population <- read_csv("http://www.nomisweb.co.uk/api/v01/dataset/NM_2002_1.data.csv?geography=1820327937...1820328318&date=latest&gender=0&c_age=200&measures=20100&select=geography_code,obs_value") %>%  
-  rename(area_code = GEOGRAPHY_CODE, population = OBS_VALUE) %>% 
-  mutate(area_code = case_when(as.character(area_code) %in% c("E06000052", "E06000053") ~ "E06000052", 
-                               as.character(area_code) %in% c("E09000001", "E09000012") ~ "E09000012",
-                               TRUE ~ area_code)) %>% 
-  group_by(area_code) %>% 
-  summarise(population = sum(population))
-
-# ------------------------------------------- 
-
-# write as GeoJSON
-
-left_join(ltla, population, by = "area_code") %>%
+  select(-st_areashape) %>% 
   st_write("ltla.geojson")
