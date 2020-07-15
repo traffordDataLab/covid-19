@@ -4,11 +4,10 @@ library(tidyverse) ; library(sf)
 # Source: ONS Open Geography Portal
 # URL: https://geoportal.statistics.gov.uk/datasets/local-authority-districts-december-2019-boundaries-uk-buc
 
-# NB dissolve polygons for Cornwall and Isles of Scilly
-
 st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson") %>% 
-  select(area_code = lad19cd, area_name = lad19nm, long, lat, st_areashape) %>% 
+  select(area_code = lad19cd, area_name = lad19nm, long, lat, st_areashape) %>% View()
   filter(str_detect(area_code, "^E")) %>% 
+  # dissolve polygons for Hackney and City of London / Cornwall and Isles of Scilly 
   mutate(area_code = as.character(area_code),
          area_name = as.character(area_name),
          area_name = case_when(
@@ -39,8 +38,12 @@ st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0
 
 read_csv("http://www.nomisweb.co.uk/api/v01/dataset/NM_2002_1.data.csv?geography=1820327937...1820328318&date=latest&gender=0&c_age=200&measures=20100&select=geography_code,obs_value") %>% 
   rename(area_code = GEOGRAPHY_CODE, population = OBS_VALUE) %>% 
-  # combine population estimates for Cornwall and Isles of Scilly
-  mutate(area_code = case_when(as.character(area_code) %in% c("E06000052", "E06000053") ~ "E06000052", TRUE ~ area_code)) %>% 
+  filter(str_detect(area_code, "^E")) %>% 
+  # combine population estimates for Hackney and City of London / Cornwall and Isles of Scilly 
+  mutate(area_code = case_when(
+    as.character(area_code) %in% c("E09000012", "E09000001") ~ "E09000012", 
+    as.character(area_code) %in% c("E06000052", "E06000053") ~ "E06000052", 
+    TRUE ~ area_code)) %>% 
   group_by(area_code) %>% 
   summarise(population = sum(population)) %>%
   write_csv("population.csv")
