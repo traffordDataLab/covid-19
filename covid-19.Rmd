@@ -10,7 +10,7 @@ output:
 runtime: shiny
 ---
 
-```{css}
+```{css, echo = FALSE}
 @import url('https://fonts.googleapis.com/css?family=Open+Sans');
 
 @font-face {
@@ -51,8 +51,14 @@ div.about {
   line-height: 18px;
 }
 
+/* Hide selection checkboxes in table */
 .rt-select-input{
   opacity: 0;
+}
+
+/* Change map pointer to grab */
+.leaflet-interactive {
+    cursor: grab;
 }
 ```
 
