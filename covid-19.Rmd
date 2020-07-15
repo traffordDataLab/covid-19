@@ -63,7 +63,7 @@ div.about {
 ```
 
 ```{r setup, include=FALSE}
-library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(sf) ; library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(reactable) ; library(lubridate) ; library(zoo) ; library(scales) ; library(ggtext)
+library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(sf) ; library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(reactable) ; library(lubridate) ; library(zoo) ; library(scales)
 
 source("global.R")
 
@@ -94,6 +94,7 @@ sf <- ltla %>%
   mutate(popup = str_c("<strong>", area_name, "</strong><br/>", paste(format(max(cases$date)-days(11),'%d %B'),"-", format(max(cases$date)-days(5),'%d %B')),":<strong> ", current_week, "</strong><br/>", paste(format(max(cases$date)-days(18),'%d %B'),"-", format(max(cases$date)-days(12),'%d %B')), ":<strong> ", previous_week, "</strong><br/>Change:<strong> ", change, "</strong>") %>% map(HTML),
          colour = case_when(change > 0 ~ "#C71E1D", change < 0 ~ "#00846C", TRUE ~ "#777"))
 ```
+
 ```{r, reactive}
 selected <- reactive(getReactableState("table", "selected"))
 ```
@@ -158,10 +159,15 @@ output$table <- renderReactable({
 uiOutput("chartUI")
 
 output$chartUI <- renderUI({
+  id <- tbl[selected(), ]$area_name
+  
   if (is.null(selected())) {
     div(HTML("Please <strong>select a local authority</strong> from the table to show a chart of daily confirmed cases")) 
     } else {
-      plotOutput("chart")
+      fillCol(flex = c(NA, 1),
+              HTML(paste0("<p style = 'color: #757575;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Daily confirmed cases in " , id, "</p>")),
+              plotOutput("chart")
+      )
       }
   })
 
@@ -179,19 +185,14 @@ output$chart <- renderPlot({
     scale_x_date(date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), breaks = function(x) unique(
         floor(pretty(seq(0, (max(x) + 1) * 1.1)))), position = "right") +
-    labs(x = NULL, y = NULL,
-       title = "Daily confirmed cases",
-       subtitle = paste0("<span style = 'color:#757575;'>", id, ", to ", format(max(cases$date), '%d %B %Y'), "</span>"),
+    labs(x = NULL, y = NULL, title = NULL, NULL,
        caption = "Source: Public Health England") +
     theme_minimal(base_size = 14) +
-    theme(plot.margin = unit(rep(0.5, 4), "cm"),
+    theme(plot.margin = unit(c(1, 0.5, 0.5, 0.5), "cm"),
           panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank(),
-          plot.title.position = "plot",
-          plot.title = element_text(colour = "#757575", size = 16, face = "bold"),
-          plot.subtitle = element_markdown(size = 14, margin = margin(b = 20)),
           plot.caption = element_text(colour = "grey60", margin = margin(t = 20, b = -10)),
-          legend.position = c(0.9, 1.1),
+          legend.position = c(0.15, 1.05),
           legend.direction = "horizontal",
           legend.text = element_text(size = 12))
   
@@ -210,7 +211,7 @@ output$mapUI <- renderUI({
     div(HTML("Please <strong>select a local authority</strong> from the table to visualise it and neighbouring areas on a map")) 
     } else {
       fillCol(flex = c(NA, 1),
-              HTML(paste0("<p style = 'color: #757575;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(5)),date)), '%d %B'),"</p>")),
+              HTML(paste0("<p style = 'color: #757575;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(5)),date)), '%d %B'),"</p><br/>")),
               leafletOutput("map")
       )
       }
