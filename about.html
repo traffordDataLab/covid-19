@@ -1,10 +1,27 @@
 <div class="about">
     <h3>COVID-19 monitor</h3>
-    <p>This dashboard visualises the week-on-week change in coronavirus cases identified by pillar 1 and 2 testing in English local authorities. All the data derives from <a href="https://www.gov.uk/government/publications/covid-19-track-coronavirus-cases" target="_blank">Public Health England</a>. Further information about coronavirus can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
-    <strong>Notes</strong>
+    <p>This dashboard visualises the week-on-week change in coronavirus cases in English local authorities. Further information about coronavirus can be found at: <a href="https://www.gov.uk/coronavirus" target="_blank">gov.uk/coronavirus</a></p>
+    <strong>Notes on the data</strong>
     <ul>
-        <li>Only confirmed cases reported 5 or more days ago are regarded by <a href="https://coronavirus.data.gov.uk/about" target="_blank">Public Health England</a> as complete. There is therefore a lag in the weeks shown.</li>
-        <li>The seven-day average is the average of a day and the previous six days of confirmed cases.</li>
+        <li>Confirmed cases are recorded up to 9am on the day of publication.</li>
+        <li>The date of confirmed cases refers to the <em>specimen</em> date not the <em>reporting</em> date.</li>
+        <li>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people are asymptomatic and others may only have mild symptoms.</li>
+        <li>Cases reported include those identified under pillar 1 (hospital) and pillar 2 (commercial labs and home tests) testing.</li>
+        <li>There is a lag in the data shown because Public Health England <a href="https://coronavirus.data.gov.uk/about" target="_blank">state</a> that reported cases within the last 5 days are considered 'incomplete'.</li>
+        <li>The data derives from Public Health England's <a href="https://coronavirus.data.gov.uk" target="_blank">Coronavirus Dashboard</a> and are  constantly being reviewed and corrected.</li>
+        <li>Cases reported for Hackney are combined with the City of London and those for Cornwall are combined with the Isles of Scilly.</li>
+        <li>The rate of cases is calculated by dividing the total number of cases by the <a href="https://www.nomisweb.co.uk/datasets/pestsyoala" target="_blank">mid-2019 estimate</a> of the resident population of each local authority multiplied by 100,000.</li>
+    </ul>
+    <p>Further information about the data can be found at <a href="coronavirus.data.gov.uk/about" target="_blank">coronavirus.data.gov.uk/about</a></p>
+    <strong>Interpreting the chart</strong>
+    <ul>
+        <li>The chart shows daily confirmed cases over time.</li>
+        <li>The seven-day average is the average of a day and the previous six days of confirmed cases. It is left aligned because the most recently reported cases are 'incomplete' and therefore likely to change.</li>
+    </ul>
+    <strong>Interpreting the map</strong>
+    <ul>
+        <li>The size of the circles in the map are proportional to the number of confirmed cases during the most recent week in each local authority district. </li>
+        <li>The circles are coloured following change in the absolute number of cases: red (week-on-week increase), grey (no week-on-week change) or green (week-on-week decrease).</li>
     </ul>
     <strong>Credits</strong>
     <p>This application was built by the <a href="https://www.trafforddatalab.io" target="_blank">Trafford Data Lab</a> in <a href="https://cran.r-project.org" target="_blank">R</a> using the <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">shiny</a>, <a

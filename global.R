@@ -26,9 +26,5 @@ ltla <- select(st_read("data/ltla.geojson"),-area_name)
 # Mid-2018 population estimates
 # Source: Nomis / ONS
 # URL: https://www.nomisweb.co.uk/datasets/pestsyoala
-population <- read_csv("http://www.nomisweb.co.uk/api/v01/dataset/NM_2002_1.data.csv?geography=1820327937...1820328318&date=latest&gender=0&c_age=200&measures=20100&select=geography_code,obs_value") %>% 
-  rename(area_code = GEOGRAPHY_CODE, population = OBS_VALUE) %>% 
-  # combine population estimates for Cornwall and Isles of Scilly
-  mutate(area_code = case_when(as.character(area_code) %in% c("E06000052", "E06000053") ~ "E06000052", TRUE ~ area_code)) %>% 
-  group_by(area_code) %>% 
-  summarise(population = sum(population))
+population <- read_csv("data/population.csv")
+

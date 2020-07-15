@@ -42,8 +42,8 @@ div.about {
 }
 
 .navbar-logo {
-     max-width:48px;
-     max-height:48px;
+  max-width:48px;
+  max-height:48px;
 }
 
 .tbl {
