@@ -188,12 +188,11 @@ output$chart <- renderPlot({
     labs(x = NULL, y = NULL, title = NULL, NULL,
        caption = "Source: Public Health England") +
     theme_minimal(base_size = 14) +
-    theme(plot.margin = unit(c(1, 0.5, 0.5, 0.5), "cm"),
+    theme(plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
           panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank(),
           plot.caption = element_text(colour = "grey60", margin = margin(t = 20, b = -10)),
-          legend.position = c(0.15, 1.05),
-          legend.direction = "horizontal",
+          legend.position = "top",
           legend.text = element_text(size = 12))
   
 }, execOnResize = TRUE) 
