@@ -129,7 +129,12 @@ output$table <- renderReactable({
             defaultSorted = "current_week_rate",
             defaultSortOrder = "desc",
             defaultColDef = colDef(align = "left"),
-            theme = reactableTheme(rowSelectedStyle = list(backgroundColor = "#eee")),
+            theme = reactableTheme(
+              rowSelectedStyle = list(backgroundColor = "#eee"),
+              searchInputStyle = list(width = "100%")),
+            language = reactableLang(
+              searchPlaceholder = "Search local authorities...",
+              noData = "No local authorities found"),
             columns = list(
               area_name = colDef(name = "Local authority",
                                  align = "left"),
