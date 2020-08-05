@@ -4,7 +4,7 @@ library(tidyverse) ; library(lubridate) ; library(sf)
 # Source: Public Health England
 # URL: https://coronavirus.data.gov.uk
 cases <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
-  filter(`Area type` == "Lower tier local authority") %>%
+  filter(`Area type` == "ltla") %>%
   mutate(`Specimen date` = as.Date(`Specimen date`, format = "%Y-%m-%d")) %>% 
   select(date = `Specimen date`,
          area_code = `Area code`,
