@@ -5,7 +5,7 @@ library(tidyverse) ; library(sf)
 # URL: https://geoportal.statistics.gov.uk/datasets/local-authority-districts-december-2019-boundaries-uk-buc
 
 st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson") %>% 
-  select(area_code = lad19cd, area_name = lad19nm, long, lat, st_areashape) %>% View()
+  select(area_code = lad19cd, area_name = lad19nm, long, lat, st_areashape) %>%
   filter(str_detect(area_code, "^E")) %>% 
   # dissolve polygons for Hackney and City of London / Cornwall and Isles of Scilly 
   mutate(area_code = as.character(area_code),
