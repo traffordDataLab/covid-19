@@ -267,4 +267,18 @@ includeHTML("about.html")
       el[i].setAttribute('alt', '');
     }
   }
+  
+  // Remove the empty navbar button
+  el = document.getElementById('navbar-button');
+  el.parentNode.removeChild(el);
+  
+  // Fix empty Twitter link (empty because it only has an icon and no other content)
+  var cbTwitter = setInterval(function(){
+    try {
+      el = document.getElementsByClassName('fa fa-twitter')[0];
+      el.parentNode.setAttribute('aria-label', 'Share this app on Twitter');
+      clearInterval(cbTwitter);
+    }
+    catch(e) {}   // do nothing, wait for next call
+  }, 100);
 </script>
