@@ -7,6 +7,7 @@ output:
     logo: logo.png
     source_code: https://github.com/traffordDataLab/covid-19
     social: ["twitter"]
+    mathjax: NULL
 runtime: shiny
 ---
 
@@ -248,3 +249,12 @@ About {data-icon="fa-info-circle"}
 includeHTML("about.html")
 ```
 
+<script>
+  // Changes to improve accessibility
+  var el;
+  
+  // Add document language
+  el = document.getElementsByTagName('html')[0];
+  el.setAttribute('lang', 'en-GB');
+  
+</script>
