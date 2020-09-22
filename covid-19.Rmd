@@ -257,4 +257,14 @@ includeHTML("about.html")
   el = document.getElementsByTagName('html')[0];
   el.setAttribute('lang', 'en-GB');
   
+  // Alt text for Trafford Council logo and Shiny loading icon
+  el = document.getElementsByTagName('img');
+  for (var i = 0; i < el.length; i++) {
+    if (el[i].className == 'navbar-logo') {
+      el[i].setAttribute('alt', 'Trafford Council logo');
+    }
+    else {
+      el[i].setAttribute('alt', '');
+    }
+  }
 </script>
