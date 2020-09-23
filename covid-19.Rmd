@@ -230,7 +230,13 @@ includeHTML("about.html")
     catch(e) {}   // do nothing, wait for next call
   }, 100);
   
-  // Add CSS at end of head element within a style tag
+  // Make the title next to the logo a <h1> heading
+  el = document.getElementsByClassName('navbar-brand')[0];
+  var h1 = document.createElement('h1');
+  var h1Content = el.replaceChild(h1, el.childNodes[0]);
+  h1.appendChild(h1Content);
+  
+  // Add CSS at end of head element within a style tag rather than as a link in the head as this doesn't have the required level of specificity and rather than a css r block as this creates a style tag within the body which is not valid HTML 
   var css = document.createElement('style');
   document.head.appendChild(css);
   css.innerHTML = `
@@ -242,6 +248,15 @@ html, body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Roboto', sans-serif;
+  color: #707070;
+}
+
+h1
+{
+  display: inline-block;
+  font-size: 1.25em;
+  margin-top: -1em;
+  padding-top: 0;
 }
 
 a {
@@ -263,11 +278,6 @@ div.about {
 .navbar-logo {
   max-width:48px;
   max-height:48px;
-}
-
-.navbar-brand
-{
-  color: #707070 !important;
 }
 
 #navbar li a
