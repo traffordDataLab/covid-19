@@ -216,9 +216,9 @@ includeHTML("about.html")
     }
   }
   
-  // Remove the empty navbar button
+  // Give the empty navbar menu button a descriptive label (this is the button which appears when the screen width is narrow)
   el = document.getElementById('navbar-button');
-  el.parentNode.removeChild(el);
+  el.setAttribute('aria-label', 'toggle menu items list')
   
   // Fix empty Twitter link (empty because it only has an icon and no other content)
   var cbTwitter = setInterval(function(){
