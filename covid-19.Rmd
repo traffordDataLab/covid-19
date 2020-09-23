@@ -236,6 +236,12 @@ includeHTML("about.html")
   var h1Content = el.replaceChild(h1, el.childNodes[0]);
   h1.appendChild(h1Content);
   
+  // Add aria-live attributes to the chart and map elements so that when their contents change it will be announced
+  el = document.getElementById('chartUI');
+  el.setAttribute('aria-live', 'polite');
+  el = document.getElementById('mapUI');
+  el.setAttribute('aria-live', 'polite');
+  
   // Add CSS at end of head element within a style tag rather than as a link in the head as this doesn't have the required level of specificity and rather than a css r block as this creates a style tag within the body which is not valid HTML 
   var css = document.createElement('style');
   document.head.appendChild(css);
