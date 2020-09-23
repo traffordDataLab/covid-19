@@ -11,58 +11,6 @@ output:
 runtime: shiny
 ---
 
-```{css, echo = FALSE}
-@import url('https://fonts.googleapis.com/css?family=Open+Sans');
-
-@font-face {
-  font-family: 'Open Sans', sans-serif;
-}
-
-div {
-  font-family: 'Open Sans', sans-serif;
-}
-
-h1, h2, h3, h4, h5, h6, .header {
-  font-family: 'Open Sans', sans-serif;
-}
-
-a {
-  color: #046dc3;
-  text-decoration: none;
-}
-
-a:hover {
-  color: #046dc3;
-  text-decoration: underline;
-}
-
-div.about { 
-  font-size: 1.1em;
-  font-family: 'Open Sans', sans-serif;
-  padding: 20px;
-}
-
-.navbar-logo {
-  max-width:48px;
-  max-height:48px;
-}
-
-.tbl {
-  font-size: 14px;
-  line-height: 18px;
-}
-
-/* Hide selection checkboxes in table */
-.rt-select-input{
-  opacity: 0;
-}
-
-/* Change map pointer to grab */
-.leaflet-interactive {
-    cursor: grab;
-}
-```
-
 ```{r setup, include=FALSE}
 library(flexdashboard) ; library(shiny) ; library(tidyverse) ; library(sf) ; library(htmlwidgets) ; library(htmltools) ; library(leaflet) ; library(leaflet.extras) ; library(reactable) ; library(lubridate) ; library(zoo) ; library(scales)
 
@@ -281,4 +229,70 @@ includeHTML("about.html")
     }
     catch(e) {}   // do nothing, wait for next call
   }, 100);
+  
+  // Add CSS at end of head element within a style tag
+  var css = document.createElement('style');
+  document.head.appendChild(css);
+  css.innerHTML = `
+@import url('https://fonts.googleapis.com/css?family=Open+Sans%7CRoboto');
+
+html, body {
+  font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', sans-serif;
+}
+
+a {
+  color: #046dc3;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #046dc3;
+  text-decoration: underline;
+}
+
+div.about { 
+  font-size: 1.1em;
+  font-family: 'Open Sans', sans-serif;
+  padding: 20px;
+}
+
+.navbar-logo {
+  max-width:48px;
+  max-height:48px;
+}
+
+.navbar-brand
+{
+  color: #707070 !important;
+}
+
+#navbar li a
+{
+  color: #707070;
+}
+
+#navbar li a:hover, #navbar li.active a
+{
+  color: #212121 !important;
+}
+
+.tbl {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+/* Hide selection checkboxes in table */
+.rt-select-input{
+  opacity: 0;
+}
+
+/* Change map pointer to grab */
+.leaflet-interactive {
+    cursor: grab;
+}
+  `;
 </script>
