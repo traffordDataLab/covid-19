@@ -96,9 +96,9 @@ output$table <- renderReactable({
                                      if (value > 0) {
                                        color <- "#C71E1D"
                                        } else if (value < 0) {
-                                         color <- "#00846C"
+                                         color <- "#007560"
                                          } else {
-                                           color <- "#777"
+                                           color <- "#636363"
                                            }
                                      list(color = color, fontWeight = "bold")
                                      },
