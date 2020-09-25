@@ -46,6 +46,16 @@ sf <- ltla %>%
 
 ```{r, reactive}
 selected <- reactive(getReactableState("table", "selected"))
+
+observe({
+  if (!is.null(selected())) {
+    id <- tbl[selected(), ]$area_name
+  
+    # construct alt text string for the ggplot img tag and send to Javascript handler to add
+    altText <- paste0("Plot of daily cases and 7 day average in ", id, ". Source: Public Health England.")
+    session$sendCustomMessage("altTextHandler", altText)
+  }
+})
 ```
 
 Dashboard
@@ -241,6 +251,36 @@ includeHTML("about.html")
   el.setAttribute('aria-live', 'polite');
   el = document.getElementById('mapUI');
   el.setAttribute('aria-live', 'polite');
+  
+  /* --- alt text for chart img --- */
+  var altTextCallback;
+  var altTextCache = "";
+  
+  // Listen for window resizing as this will cause the chart to redraw and lose the alt text
+  window.addEventListener('resize', function () {
+    var chartContainer = document.getElementById('chartUI');
+    
+    // We only want to update the alt text if there is a chart present. The following classes are only present if the chart is displayed
+    if (chartContainer.childNodes[0].classList == 'flexfill-container flexfill-container-column') {
+      altTextCallback = setInterval(updateAltText, 500, altTextCache);
+    }
+  });
+  
+  // Receive call from Shiny server with the alt text for the dynamic plot img.
+  Shiny.addCustomMessageHandler('altTextHandler', function(altText) {
+    altTextCache = altText;
+    altTextCallback = setInterval(updateAltText, 100, altText);
+  });
+  
+  function updateAltText(text) {
+    try {
+      var plotContainer = document.getElementById('chart');
+      plotContainer.firstChild.setAttribute('alt', text);
+      clearInterval(altTextCallback); // Cancel the callback as we have updated the alt text
+    }
+    catch(e) {}
+  }
+  /* ------------------------------ */
   
   // Add CSS at end of head element within a style tag rather than as a link in the head as this doesn't have the required level of specificity and rather than a css r block as this creates a style tag within the body which is not valid HTML 
   var css = document.createElement('style');
