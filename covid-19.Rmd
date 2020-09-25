@@ -174,7 +174,7 @@ output$mapUI <- renderUI({
     div(HTML("Please <strong>select a local authority</strong> from the table to visualise it and neighbouring areas on a map")) 
     } else {
       fillCol(flex = c(NA, 1),
-              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(5)),date)), '%d %B'),"</p><br/>")),
+              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Map of confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(5)),date)), '%d %B'),"</p><br/>")),
               leafletOutput("map")
       )
       }
