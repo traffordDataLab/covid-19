@@ -253,7 +253,6 @@ includeHTML("about.html")
   el.setAttribute('aria-live', 'polite');
   
   /* --- alt text for chart img --- */
-  var altTextCallback;
   var altTextCache = "";
   
   // Listen for window resizing as this will cause the chart to redraw and lose the alt text
@@ -262,23 +261,35 @@ includeHTML("about.html")
     
     // We only want to update the alt text if there is a chart present. The following classes are only present if the chart is displayed
     if (chartContainer.childNodes[0].classList == 'flexfill-container flexfill-container-column') {
-      altTextCallback = setInterval(updateAltText, 500, altTextCache);
+      var altTextCallback = setInterval(function () {
+        // call the fn to update the alt text and clear the callback if successful
+        if (updateAltText(altTextCache)) clearInterval(altTextCallback);
+      }, 500);
     }
   });
   
   // Receive call from Shiny server with the alt text for the dynamic plot img.
   Shiny.addCustomMessageHandler('altTextHandler', function(altText) {
-    altTextCache = altText;
-    altTextCallback = setInterval(updateAltText, 100, altText);
+    altTextCache = altText;   // cache the alt text in case is needs reinstating on window resize
+    
+    var altTextCallback = setInterval(function () {
+        // call the fn to update the alt text and clear the callback if successful
+        if (updateAltText(altText)) clearInterval(altTextCallback);
+      }, 100);
   });
   
   function updateAltText(text) {
+    /*
+      Attempt to apply the alt text to the img, which is the first child of <div id='chart'>. 
+      If it fails it's usually because Shiny hasn't created either element yet.
+      If this happens the interval will call the function repeatedly until we succeed.
+    */
     try {
       var plotContainer = document.getElementById('chart');
       plotContainer.firstChild.setAttribute('alt', text);
-      clearInterval(altTextCallback); // Cancel the callback as we have updated the alt text
+      return true;
     }
-    catch(e) {}
+    catch(e) { return false; }
   }
   /* ------------------------------ */
   
