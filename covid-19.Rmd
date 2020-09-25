@@ -18,8 +18,8 @@ source("global.R")
 
 df <- cases %>% 
   mutate(period = case_when(
-    date >= max(date)-days(11) & date <= max(date)-days(5) ~ "current_week",
-    date >= max(date)-days(18) & date <= max(date)-days(12) ~ "previous_week"
+    date >= max(date)-days(8) & date <= max(date)-days(2) ~ "current_week",
+    date >= max(date)-days(15) & date <= max(date)-days(9) ~ "previous_week"
   )) %>% 
   filter(!is.na(period)) %>% 
   select(-date) %>%
@@ -35,12 +35,15 @@ df <- cases %>%
   ungroup() 
 
 # table data
-tbl <- select(df, area_name, previous_week_rate, current_week_rate, change_rate)
-
+tbl <- df %>% 
+  arrange(desc(current_week_rate)) %>% 
+  mutate(rank = rank(desc(current_week_rate), ties.method = "min")) %>% 
+  select(rank, area_name, previous_week_rate, current_week_rate, change_rate)
+  
 # map data
 sf <- ltla %>% 
   left_join(df, by = "area_code") %>% 
-  mutate(popup = str_c("<strong>", area_name, "</strong><br/>", paste(format(max(cases$date)-days(11),'%d %B'),"-", format(max(cases$date)-days(5),'%d %B')),":<strong> ", current_week, "</strong><br/>", paste(format(max(cases$date)-days(18),'%d %B'),"-", format(max(cases$date)-days(12),'%d %B')), ":<strong> ", previous_week, "</strong><br/>Change:<strong> ", change, "</strong>") %>% map(HTML),
+  mutate(popup = str_c("<strong>", area_name, "</strong><br/>", paste(format(max(cases$date)-days(8),'%d %b'),"-", format(max(cases$date)-days(2),'%d %b')),":<strong> ", current_week, "</strong><br/>", paste(format(max(cases$date)-days(15),'%d %b'),"-", format(max(cases$date)-days(9),'%d %b')), ":<strong> ", previous_week, "</strong><br/>Change:<strong> ", change, "</strong>") %>% map(HTML),
          colour = case_when(change > 0 ~ "#C71E1D", change < 0 ~ "#00846C", TRUE ~ "#777"))
 ```
 
@@ -77,7 +80,6 @@ output$table <- renderReactable({
             selection = "single", 
             onClick = "select", 
             highlight = TRUE, 
-            rowStyle = list(cursor = "pointer"),
             paginationType = "simple",
             height = "auto",
             compact = TRUE,
@@ -85,8 +87,8 @@ output$table <- renderReactable({
             wrap = FALSE,
             resizable = TRUE,
             searchable = TRUE,
-            defaultSorted = "current_week_rate",
-            defaultSortOrder = "desc",
+            defaultSorted = "rank",
+            defaultSortOrder = "asc",
             defaultColDef = colDef(align = "left"),
             theme = reactableTheme(
               rowSelectedStyle = list(backgroundColor = "#eee"),
@@ -94,25 +96,21 @@ output$table <- renderReactable({
             language = reactableLang(
               searchPlaceholder = "Search local authorities...",
               noData = "No local authorities found"),
+            rowStyle = function(index) {
+            if (tbl[index, "current_week_rate"] >= 50) {
+              list(background = "rgba(220,24,65,0.1)")
+              } else if (tbl[index, "current_week_rate"] >= 25) {
+                list(background = "rgba(230,184,63,0.1)")
+                } else {
+                  list(background = "rgba(40,123,40,0.1)")
+                  }
+            },
             columns = list(
-              area_name = colDef(name = "Local authority",
-                                 align = "left"),
-              previous_week_rate = colDef(header =  paste(format(max(cases$date)-days(18),'%d %B'),"-", format(max(cases$date)-days(12),'%d %B')),
-                                          align = "left"),
-              current_week_rate = colDef(header = paste(format(max(cases$date)-days(11),'%d %B'),"-", format(max(cases$date)-days(5),'%d %B')), 
-                                         align = "left"),
-              change_rate = colDef(name = "Change",
-                                   style = function(value) {
-                                     if (value > 0) {
-                                       color <- "#C71E1D"
-                                       } else if (value < 0) {
-                                         color <- "#007560"
-                                         } else {
-                                           color <- "#636363"
-                                           }
-                                     list(color = color, fontWeight = "bold")
-                                     },
-                                     align = "left"))
+              rank = colDef(name = "Rank", align = "left"),
+              area_name = colDef(name = "Local authority", align = "left"),
+              previous_week_rate = colDef(header =  paste(format(max(cases$date)-days(15),'%d %b'),"-", format(max(cases$date)-days(9),'%d %b')), align = "left"),
+              current_week_rate = colDef(header = paste(format(max(cases$date)-days(8),'%d %b'),"-", format(max(cases$date)-days(2),'%d %b')), align = "left"),
+              change_rate = colDef(name = "Change", align = "left"))
             )
   
   })
@@ -146,7 +144,7 @@ output$chart <- renderPlot({
     geom_col(data = selected_cases, aes(x = date, y = new_cases), fill = "#bdbdbd", colour = NA, width = 0.8, alpha = 0.7) +
     geom_line(data = selected_cases, aes(x = date, y = ma_cases, colour = "ma_cases"), size = 1, alpha = 1) +
     scale_colour_manual(values = c("ma_cases" = "#212121"), name = NULL, labels = "7-day average") +
-    scale_x_date(date_labels = "%d-%b") +
+    scale_x_date(breaks = c(min(selected_cases$date), max(selected_cases$date)), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), breaks = function(x) unique(
         floor(pretty(seq(0, (max(x) + 1) * 1.1)))), position = "right") +
     labs(x = NULL, y = NULL, title = NULL, NULL,
@@ -154,10 +152,11 @@ output$chart <- renderPlot({
     theme_minimal(base_size = 14) +
     theme(panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank(),
-          plot.caption = element_text(colour = "grey60", margin = margin(t = 20, b = -10)),
+          plot.caption = element_text(colour = "grey60", margin = margin(t = 20, b = -6)),
           legend.position = "top",
           legend.justification = "left",
-          legend.text = element_text(size = 12))
+          legend.text = element_text(size = 12),
+          axis.ticks.x = element_line(colour = 'black', size = 0.5))
   
 }, execOnResize = TRUE) 
 ```
@@ -174,7 +173,7 @@ output$mapUI <- renderUI({
     div(HTML("Please <strong>select a local authority</strong> from the table to visualise it and neighbouring areas on a map")) 
     } else {
       fillCol(flex = c(NA, 1),
-              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Map of confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(5)),date)), '%d %B'),"</p><br/>")),
+              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Map of confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(2)),date)), '%d %B %Y'),"</p><br/>")),
               leafletOutput("map")
       )
       }
