@@ -18,12 +18,30 @@ cases <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cas
   ungroup() %>% 
   fill(area_name)
 
-# Local Authority Districts in England
-# Source: ONS Open Geography Portal
-# URL: https://geoportal.statistics.gov.uk/datasets/local-authority-districts-december-2019-boundaries-uk-buc
-ltla <- select(st_read("data/ltla.geojson"),-area_name)
+# Latest 7 days of cases by MSOA
+# Source: Public Health England
+# URL: https://coronavirus.data.gov.uk/
+msoa_cases <- read_csv("https://coronavirus.data.gov.uk/downloads/msoa_data/MSOAs_latest.csv") %>% 
+  select(lad19cd = lad19_cd,
+         lad19nm = lad19_nm,
+         msoa11cd = msoa11_cd,
+         msoa11hclnm = msoa11_hclnm,
+         n = tail(names(.), 1)) %>% 
+  mutate(n = ifelse(n == -99, 0, n),
+         n = as.integer(n)) %>% 
+  relocate(n, .after = last_col()) %>% 
+  # combine Hackney and City of London / Cornwall and Isles of Scilly 
+  mutate(lad19nm = case_when(
+    lad19nm %in% c("Cornwall", "Isles of Scilly") ~ "Cornwall and Isles of Scilly",
+    lad19nm %in% c("City of London", "Hackney") ~ "Hackney and City of London", 
+    TRUE ~ lad19nm))
 
-# Mid-2018 population estimates
+# MSOAs in England
+# Source: ONS Open Geography Portal
+# URL: https://geoportal.statistics.gov.uk/datasets/middle-layer-super-output-areas-december-2011-boundaries-ew-bgc
+msoa <- st_read("data/msoa.geojson")
+
+# Mid-2019 population estimates
 # Source: Nomis / ONS
 # URL: https://www.nomisweb.co.uk/datasets/pestsyoala
 population <- read_csv("data/population.csv")

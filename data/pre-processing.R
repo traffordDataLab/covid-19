@@ -32,6 +32,16 @@ st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0
   select(-st_areashape) %>% 
   st_write("ltla.geojson")
 
+# MSOAs in England
+# Source: ONS Open Geography Portal
+# URL: https://geoportal.statistics.gov.uk/datasets/middle-layer-super-output-areas-december-2011-boundaries-ew-bgc
+
+st_read("https://opendata.arcgis.com/datasets/1e6f162967de4f3da92040761e8464d8_0.geojson") %>% 
+  mutate(lon = map_dbl(geometry, ~st_centroid(.x)[[1]]),
+         lat = map_dbl(geometry, ~st_centroid(.x)[[2]])) %>% 
+  select(msoa11cd = MSOA11CD, msoa11nm = MSOA11NM, lon, lat) %>% 
+  st_write("msoa.geojson")
+
 # Mid-2019 population estimates
 # Source: Nomis / ONS
 # URL: https://www.nomisweb.co.uk/datasets/pestsyoala

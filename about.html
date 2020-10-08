@@ -5,7 +5,7 @@
     <ul>
         <li>Confirmed cases are recorded up to 9am on the day of publication.</li>
         <li>The date of confirmed cases refers to the <em>specimen</em> date not the <em>reporting</em> date.</li>
-        <li>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people are asymptomatic and others may only have mild symptoms.</li>
+        <li>The number of <em>confirmed</em> cases is likely to be much lower than the <em>total</em> number of cases because some people are asymptomatic.</li>
         <li>Cases reported include those identified under pillar 1 (hospital) and pillar 2 (commercial labs and home tests) testing.</li>
         <li>There is a lag in the data shown because Public Health England <a href="https://coronavirus.data.gov.uk/about-data" target="_blank">state</a> that the most recent cases are 'incomplete'.</li>
         <li>The data derives from Public Health England's <a href="https://coronavirus.data.gov.uk" target="_blank">Coronavirus Dashboard</a> and are  constantly being reviewed and corrected.</li>
@@ -15,17 +15,18 @@
     <p>Further information about the data can be found at <a href="coronavirus.data.gov.uk/about" target="_blank">coronavirus.data.gov.uk/about</a></p>
     <h3>Interpreting the table</h3>
     <ul>
-        <li>The table rows are colour coded as red when the most recent week's incidence rate is 50 or more, amber when it is between 25 and 49, and green when it is 24 or less.</li>
-    </ul>    
+        <li>The table  shows the weekly incidence rate for local authorities in England.</li>
+        <li>Local authorities can be sorted by the lowest, highest, or weekly change in incidence rate.</li>
+    </ul>
     <h3>Interpreting the chart</h3>
     <ul>
         <li>The chart shows daily confirmed cases over time.</li>
-        <li>The seven-day average is the average of a day and the previous six days of confirmed cases. It is left aligned because the most recently reported cases are 'incomplete' and therefore likely to change.</li>
+        <li>The seven-day average is the average of a day and the three days of confirmed cases before and after it. It is centre aligned because the most recently reported cases are 'incomplete' and therefore likely to change.</li>
     </ul>
     <h3>Interpreting the map</h3>
     <ul>
-        <li>The size of the circles in the map are proportional to the number of confirmed cases during the most recent week in each local authority district. </li>
-        <li>The circles are coloured following change in the absolute number of cases: red (week-on-week increase), grey (no week-on-week change) or green (week-on-week decrease).</li>
+        <li>The size of the circles on the map are proportional to the number of confirmed cases reported in each Middle-layer Super Output Area (MSOA) during the latest 7 days of complete data. Each MSOA contains on average 7,200 residents.</li>
+        <li>The position of the circle corresponds to the centroid or centre of the MSOA not the location of reported cases.</li>
     </ul>
     <h3>Credits</h3>
     <p>This application was built by the <a href="https://www.trafforddatalab.io" target="_blank">Trafford Data Lab</a> in <a href="https://cran.r-project.org" target="_blank">R</a> using the <a href="https://cran.r-project.org/web/packages/shiny/index.html" target="_blank">shiny</a>, <a

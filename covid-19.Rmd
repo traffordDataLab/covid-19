@@ -41,10 +41,11 @@ tbl <- df %>%
   select(rank, area_name, previous_week_rate, current_week_rate, change_rate)
   
 # map data
-sf <- ltla %>% 
-  left_join(df, by = "area_code") %>% 
-  mutate(popup = str_c("<strong>", area_name, "</strong><br/>", paste(format(max(cases$date)-days(8),'%d %b'),"-", format(max(cases$date)-days(2),'%d %b')),":<strong> ", current_week, "</strong><br/>", paste(format(max(cases$date)-days(15),'%d %b'),"-", format(max(cases$date)-days(9),'%d %b')), ":<strong> ", previous_week, "</strong><br/>Change:<strong> ", change, "</strong>") %>% map(HTML),
-         colour = case_when(change > 0 ~ "#C71E1D", change < 0 ~ "#00846C", TRUE ~ "#777"))
+sf <- msoa %>% 
+  left_join(msoa_cases, by = "msoa11cd") %>% 
+  mutate(popup = ifelse(n == 0,
+                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/>0-2 cases") %>% map(HTML),
+                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/><strong>", n, "</strong> cases") %>% map(HTML)))
 ```
 
 ```{r, reactive}
@@ -70,7 +71,7 @@ Column {data-width=500}
 ###
 ```{r}
 fillCol(flex = c(NA, 1),
-  HTML("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases per 100,000</p>"),
+  HTML("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Weekly confirmed cases per 100,000</p>"),
   reactableOutput("table", height = "100%")
 )
 
@@ -91,20 +92,12 @@ output$table <- renderReactable({
             defaultSortOrder = "asc",
             defaultColDef = colDef(align = "left"),
             theme = reactableTheme(
-              rowSelectedStyle = list(backgroundColor = "#eee"),
+              rowSelectedStyle = list(color = "rgba(255, 255, 255, 1)", backgroundColor = "rgba(57, 128, 158, 0.7)"),
               searchInputStyle = list(width = "100%")),
             language = reactableLang(
               searchPlaceholder = "Search local authorities...",
               noData = "No local authorities found"),
-            rowStyle = function(index) {
-            if (tbl[index, "current_week_rate"] >= 50) {
-              list(background = "rgba(220,24,65,0.1)")
-              } else if (tbl[index, "current_week_rate"] >= 25) {
-                list(background = "rgba(230,184,63,0.1)")
-                } else {
-                  list(background = "rgba(40,123,40,0.1)")
-                  }
-            },
+            rowStyle = list(cursor = "pointer"),
             columns = list(
               rank = colDef(name = "Rank", align = "left"),
               area_name = colDef(name = "Local authority", align = "left"),
@@ -136,14 +129,16 @@ output$chartUI <- renderUI({
 output$chart <- renderPlot({
   
   id <- tbl[selected(), ]$area_name
-  selected_cases <- filter(cases, area_name == id) %>% 
-      mutate(ma_cases = rollmean(new_cases, 7, align = "left", fill = NA))
+  selected_cases <- filter(cases, area_name == id, 
+                           # exclude incomplete cases
+                           date <= max(date)-days(2)) %>% 
+      mutate(ma_cases = rollmean(new_cases, 7, align = "center", fill = NA))
   
   ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(data = selected_cases, aes(x = date, y = new_cases), fill = "#bdbdbd", colour = NA, width = 0.8, alpha = 0.7) +
+    geom_col(data = selected_cases, aes(x = date, y = new_cases), fill = "#39809E", colour = NA, width = 0.8, alpha = 0.7) +
     geom_line(data = selected_cases, aes(x = date, y = ma_cases, colour = "ma_cases"), size = 1, alpha = 1) +
-    scale_colour_manual(values = c("ma_cases" = "#212121"), name = NULL, labels = "7-day average") +
+    scale_colour_manual(values = c("ma_cases" = "#757575"), name = NULL, labels = "7-day average") +
     scale_x_date(breaks = c(min(selected_cases$date), max(selected_cases$date)), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), breaks = function(x) unique(
         floor(pretty(seq(0, (max(x) + 1) * 1.1)))), position = "right") +
@@ -169,11 +164,13 @@ Column {data-width=500}
 uiOutput("mapUI")
 
 output$mapUI <- renderUI({
+  id <- tbl[selected(), ]$area_name
+  
   if (is.null(selected())) {
-    div(HTML("Please <strong>select a local authority</strong> from the table to visualise it and neighbouring areas on a map")) 
+    div(HTML("Please <strong>select a local authority</strong> from the table to show a map of case counts by neighbourhood")) 
     } else {
       fillCol(flex = c(NA, 1),
-              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Map of confirmed cases during week ending ", format(max(pull(filter(cases, date == max(date)-days(2)),date)), '%d %B %Y'),"</p><br/>")),
+              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases over the last 7 days in ", id, "</p>")),
               leafletOutput("map")
       )
       }
@@ -181,18 +178,17 @@ output$mapUI <- renderUI({
 
 zoom_to <- reactive({
   id <- tbl[selected(), ]$area_name
-  filter(sf, area_name == id) 
+  filter(sf, lad19nm == id) 
   })
 
 output$map <- renderLeaflet({
   
-    leaflet(data = sf, options = leafletOptions(zoomControl = FALSE)) %>%
-    setView(lng = zoom_to()$long, lat = zoom_to()$lat, zoom = 10) %>% 
-    addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a>') %>%
-    addPolygons(data = ltla, fillColor = "transparent", weight = 1, color = "#bdbdbd", opacity = 1) %>% 
-    addPolygons(data = zoom_to(), fillColor = "#bdbdbd", weight = 1, color = "#bdbdbd", opacity = 1) %>% 
-    addCircleMarkers(lng = ~long, lat = ~lat, radius = ~sqrt(current_week), fillColor = ~colour, fillOpacity = 0.3, weight = 1, color = ~colour, opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")) %>% 
-    onRender("function(el, t) {var myMap = this;myMap._container.style['background'] = '#ffffff';}", paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
+    leaflet(data = zoom_to()) %>%
+    addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a>') %>%
+    addPolygons(fillColor = "transparent", weight = 1, color = "#757575", opacity = 1) %>% 
+    addCircleMarkers(lng = ~lon, lat = ~lat, radius = ~sqrt(n), fillColor = "#39809E", fillOpacity = 0.7, weight = 1, color = "#FFFFFF", opacity = 1) %>%
+    addPolygons(fillColor = "transparent", stroke = TRUE, weight = 1, color = "transparent", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "bottom", offset = c(0, 25)), highlight = highlightOptions(fillColor = "#39809E", fillOpacity = 0.2, stroke = TRUE, color = "#39809E", weight = 1, bringToFront = TRUE)) %>%
+  onRender(paste0("function(el, x) {$('head').append(","\'<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\'",");}"))
   
   })
 ```
