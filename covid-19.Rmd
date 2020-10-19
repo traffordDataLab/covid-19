@@ -30,15 +30,14 @@ df <- cases %>%
   left_join(population, by = "area_code") %>% 
   mutate(previous_week_rate = round(previous_week/population*100000,1),
          current_week_rate = round(current_week/population*100000,1),
-         change = current_week-previous_week,
-         change_rate = round(change/population*100000,1)) %>% 
+         percent_change = (current_week-previous_week)/previous_week) %>% 
   ungroup() 
 
 # table data
 tbl <- df %>% 
   arrange(desc(current_week_rate)) %>% 
   mutate(rank = rank(desc(current_week_rate), ties.method = "min")) %>% 
-  select(rank, area_name, previous_week_rate, current_week_rate, change_rate)
+  select(rank, area_name, previous_week_rate, current_week_rate, percent_change)
   
 # map data
 sf <- msoa %>% 
@@ -99,11 +98,22 @@ output$table <- renderReactable({
               noData = "No local authorities found"),
             rowStyle = list(cursor = "pointer"),
             columns = list(
-              rank = colDef(name = "Rank", align = "left"),
+              rank = colDef(name = "Rank", maxWidth = 60, align = "left"),
               area_name = colDef(name = "Local authority", align = "left"),
               previous_week_rate = colDef(header =  paste(format(max(cases$date)-days(15),'%d %b'),"-", format(max(cases$date)-days(9),'%d %b')), align = "left"),
               current_week_rate = colDef(header = paste(format(max(cases$date)-days(8),'%d %b'),"-", format(max(cases$date)-days(2),'%d %b')), align = "left"),
-              change_rate = colDef(name = "Change", align = "left"))
+              percent_change = colDef(name = "% change", format = colFormat(percent = TRUE, digits = 1), 
+                                      style = function(value) {
+                                        if (value > 0) {
+                                          color <- "#C71E1D"
+                                          } else if (value < 0) {
+                                            color <- "#007560"
+                                            } else {
+                                              color <- "#636363"
+                                              }
+                                        list(color = color)
+                                        }, 
+                                      align = "left"))
             )
   
   })
