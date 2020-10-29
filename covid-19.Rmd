@@ -44,7 +44,7 @@ sf <- msoa %>%
   left_join(msoa_cases, by = "msoa11cd") %>% 
   mutate(popup = ifelse(n == 0,
                         str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/>0-2 cases") %>% map(HTML),
-                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/><strong>", n, "</strong> cases") %>% map(HTML)))
+                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/><strong>", n, "</strong> cases<br/><strong>", rate, "</strong> per 100,000") %>% map(HTML)))
 ```
 
 ```{r, reactive}
@@ -180,7 +180,7 @@ output$mapUI <- renderUI({
     div(HTML("Please <strong>select a local authority</strong> from the table to show a map of case counts by neighbourhood")) 
     } else {
       fillCol(flex = c(NA, 1),
-              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases over the last 7 days in ", id, "</p>")),
+              HTML(paste0("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Confirmed cases during week ending ", format(unique(msoa_cases$date), '%d %B'), " in ", id, "</p>")),
               leafletOutput("map")
       )
       }

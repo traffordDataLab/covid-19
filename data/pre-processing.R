@@ -32,7 +32,25 @@ st_read("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0
   select(-st_areashape) %>% 
   st_write("ltla.geojson")
 
-# MSOAs in England
+# MSOA names
+# Source: House of Commons Library
+# URL: https://visual.parliament.uk/msoanames
+
+msoa_names <- read_csv("https://visual.parliament.uk/msoanames/static/MSOA-Names-1.6.0.csv") %>% 
+  select(msoa11cd, msoa11hclnm)
+
+# Census lookup
+# Source: ONS Open Geography Portal
+# Source: https://geoportal.statistics.gov.uk/datasets/output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-december-2011-lookup-in-england-and-wales
+
+read_csv("https://opendata.arcgis.com/datasets/6ecda95a83304543bc8feedbd1a58303_0.csv") %>% 
+  rename_all(tolower) %>% 
+  distinct(msoa11cd, .keep_all = TRUE) %>% 
+  left_join(msoa_names, by = "msoa11cd") %>% 
+  select(msoa11cd, msoa11hclnm, lad19cd = lad11cd, lad19nm = lad11nm) %>% 
+  write_csv("msoa_lookup.csv")
+
+# MSOAs boundaries
 # Source: ONS Open Geography Portal
 # URL: https://geoportal.statistics.gov.uk/datasets/middle-layer-super-output-areas-december-2011-boundaries-ew-bgc
 
