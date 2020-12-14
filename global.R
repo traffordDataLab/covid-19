@@ -29,8 +29,8 @@ msoa_lookup <- read_csv("data/msoa_lookup.csv")
 
 # Latest 7 days of cases by MSOA
 # Source: Public Health England
-# URL: https://coronavirus.data.gov.uk/
-msoa_cases <- read_csv("https://coronavirus.data.gov.uk/downloads/msoa_data/MSOAs_latest.csv") %>%
+# URL: https://coronavirus.data.gov.uk/details/download
+msoa_cases <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=msoa&metric=newCasesBySpecimenDateRollingSum&metric=newCasesBySpecimenDateRollingRate&format=csv") %>%
   filter(date == max(date)) %>% 
   select(msoa11cd = areaCode, date, n = newCasesBySpecimenDateRollingSum, rate = newCasesBySpecimenDateRollingRate) %>% 
   mutate(n = replace_na(n, 0),
