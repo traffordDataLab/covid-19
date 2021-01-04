@@ -28,8 +28,8 @@ df <- cases %>%
   pivot_wider(names_from = period, values_from = total_cases) %>% 
   select(area_code, area_name, previous_week, current_week) %>%
   left_join(population, by = "area_code") %>% 
-  mutate(previous_week_rate = round(previous_week/population*100000,1),
-         current_week_rate = round(current_week/population*100000,1),
+  mutate(previous_week_rate = round(previous_week/population*100000,0),
+         current_week_rate = round(current_week/population*100000,0),
          percent_change = (current_week-previous_week)/previous_week) %>% 
   ungroup() 
 
@@ -44,7 +44,7 @@ sf <- msoa %>%
   left_join(msoa_cases, by = "msoa11cd") %>% 
   mutate(popup = ifelse(n == 0,
                         str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/>0-2 cases") %>% map(HTML),
-                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/><strong>", n, "</strong> cases<br/><strong>", rate, "</strong> per 100,000") %>% map(HTML)))
+                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/><strong>", n, "</strong> cases<br/><strong>", comma(round(rate, 0), accuracy = 1), "</strong> per 100,000") %>% map(HTML)))
 ```
 
 ```{r, reactive}
@@ -100,8 +100,8 @@ output$table <- renderReactable({
             columns = list(
               rank = colDef(name = "Rank", maxWidth = 60, align = "left"),
               area_name = colDef(name = "Local authority", align = "left"),
-              previous_week_rate = colDef(header =  paste(format(max(cases$date)-days(15),'%d %b'),"-", format(max(cases$date)-days(9),'%d %b')), align = "left"),
-              current_week_rate = colDef(header = paste(format(max(cases$date)-days(8),'%d %b'),"-", format(max(cases$date)-days(2),'%d %b')), align = "left"),
+              previous_week_rate = colDef(header =  paste(format(max(cases$date)-days(15),'%d %b'),"-", format(max(cases$date)-days(9),'%d %b')), format = colFormat(separators = TRUE), align = "left"),
+              current_week_rate = colDef(header = paste(format(max(cases$date)-days(8),'%d %b'),"-", format(max(cases$date)-days(2),'%d %b')), format = colFormat(separators = TRUE), align = "left"),
               percent_change = colDef(name = "% change", format = colFormat(percent = TRUE, digits = 1), 
                                       style = function(value) {
                                         if (value > 0) {
@@ -146,9 +146,9 @@ output$chart <- renderPlot({
   
   ggplot() +
     geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
-    geom_col(data = selected_cases, aes(x = date, y = new_cases), fill = "#39809E", colour = NA, width = 0.8, alpha = 0.7) +
+    geom_col(data = selected_cases, aes(x = date, y = new_cases), fill = "#39809E", colour = NA, width = 0.8, alpha = 0.6) +
     geom_line(data = selected_cases, aes(x = date, y = ma_cases, colour = "ma_cases"), size = 1, alpha = 1) +
-    scale_colour_manual(values = c("ma_cases" = "#757575"), name = NULL, labels = "7-day average") +
+    scale_colour_manual(values = c("ma_cases" = "#39809E"), name = NULL, labels = "7-day average") +
     scale_x_date(breaks = c(min(selected_cases$date), max(selected_cases$date)), date_labels = "%d-%b") +
     scale_y_continuous(expand = c(0.005, 0.005), breaks = function(x) unique(
         floor(pretty(seq(0, (max(x) + 1) * 1.1)))), position = "right") +
