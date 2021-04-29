@@ -27,10 +27,11 @@ df <- cases %>%
   summarise(total_cases = sum(new_cases)) %>% 
   pivot_wider(names_from = period, values_from = total_cases) %>% 
   select(area_code, area_name, previous_week, current_week) %>%
+  filter(!is.na(current_week)) %>%
   left_join(population, by = "area_code") %>% 
   mutate(previous_week_rate = round(previous_week/population*100000,0),
          current_week_rate = round(current_week/population*100000,0),
-         percent_change = (current_week-previous_week)/previous_week) %>% 
+         percent_change = if_else(current_week == 0 | previous_week == 0, as.numeric(NA), (current_week-previous_week)/previous_week)) %>%
   ungroup() 
 
 # table data
@@ -42,7 +43,8 @@ tbl <- df %>%
 # map data
 sf <- msoa %>% 
   left_join(msoa_cases, by = "msoa11cd") %>% 
-  mutate(popup = ifelse(n == 0,
+  mutate(n = if_else(is.na(n),0,n)) %>%
+  mutate(popup = if_else(n == 0,
                         str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/>0-2 cases") %>% map(HTML),
                         str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/><strong>", n, "</strong> cases<br/><strong>", comma(round(rate, 0), accuracy = 1), "</strong> per 100,000") %>% map(HTML)))
 ```
@@ -104,7 +106,9 @@ output$table <- renderReactable({
               current_week_rate = colDef(header = paste(format(max(cases$date)-days(8),'%d %b'),"-", format(max(cases$date)-days(2),'%d %b')), format = colFormat(separators = TRUE), align = "left"),
               percent_change = colDef(name = "% change", format = colFormat(percent = TRUE, digits = 1), 
                                       style = function(value) {
-                                        if (value > 0) {
+                                        if (is.na(value)){
+                                          color <- "#000000"
+                                        } else if (value > 0) {
                                           color <- "#C71E1D"
                                           } else if (value < 0) {
                                             color <- "#007560"
@@ -112,7 +116,7 @@ output$table <- renderReactable({
                                               color <- "#636363"
                                               }
                                         list(color = color)
-                                        }, 
+                                        },
                                       align = "left"))
             )
   
