@@ -29,6 +29,7 @@ df <- cases %>%
   select(area_code, area_name, previous_week, current_week) %>%
   filter(!is.na(current_week)) %>%
   left_join(population, by = "area_code") %>% 
+  filter(!is.na(population)) %>%
   mutate(previous_week_rate = round(previous_week/population*100000,0),
          current_week_rate = round(current_week/population*100000,0),
          percent_change = if_else(current_week == 0 | previous_week == 0, as.numeric(NA), (current_week-previous_week)/previous_week)) %>%

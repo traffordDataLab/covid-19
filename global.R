@@ -3,13 +3,16 @@ library(tidyverse) ; library(lubridate) ; library(sf)
 # Confirmed cases
 # Source: Public Health England
 # URL: https://coronavirus.data.gov.uk
-cases <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") %>% 
-  filter(`Area type` == "ltla") %>%
-  mutate(`Specimen date` = as.Date(`Specimen date`, format = "%Y-%m-%d")) %>% 
-  select(date = `Specimen date`,
-         area_code = `Area code`,
-         area_name = `Area name`,
-         new_cases = `Daily lab-confirmed cases`) %>% 
+#cases <- read_csv("https://coronavirus.data.gov.uk/downloads/csv/coronavirus-cases_latest.csv") 
+
+  
+cases <- read_csv("https://api.coronavirus.data.gov.uk/v2/data?areaType=ltla&metric=newCasesByPublishDate&metric=newCasesBySpecimenDate&format=csv") %>%
+  filter(`areaType` == "ltla") %>%
+  mutate(`date` = as.Date(`date`, format = "%Y-%m-%d")) %>% 
+  select(date,
+         area_code = `areaCode`,
+         area_name = `areaName`,
+         new_cases = `newCasesBySpecimenDate`) %>% 
   arrange(date) %>% 
   group_by(area_code, area_name) %>%
   complete(date = seq.Date(min(date), max(date), by = "day")) %>% 
