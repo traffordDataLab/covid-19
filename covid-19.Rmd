@@ -43,11 +43,11 @@ tbl <- df %>%
   
 # map data
 sf <- msoa %>% 
-  left_join(msoa_cases, by = "msoa11cd") %>% 
+  left_join(msoa_cases, by = "msoa21cd") %>% 
   mutate(n = if_else(is.na(n),0,n)) %>%
   mutate(popup = if_else(n == 0,
-                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/>0-2 cases") %>% map(HTML),
-                        str_c("<strong>", msoa11hclnm, "</strong><br/><em>", lad19nm, "</em><br/><strong>", n, "</strong> cases<br/><strong>", comma(round(rate, 0), accuracy = 1), "</strong> per 100,000") %>% map(HTML)))
+                        str_c("<strong>", msoa21hclnm, "</strong><br/><em>", lad22nm, "</em><br/>0-2 cases") %>% map(HTML),
+                        str_c("<strong>", msoa21hclnm, "</strong><br/><em>", lad22nm, "</em><br/><strong>", n, "</strong> cases<br/><strong>", comma(round(rate, 0), accuracy = 1), "</strong> per 100,000") %>% map(HTML)))
 ```
 
 ```{r, reactive}
@@ -73,7 +73,7 @@ Column {data-width=500}
 ###
 ```{r}
 fillCol(flex = c(NA, 1),
-  HTML("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Weekly confirmed cases per 100,000</p>"),
+  HTML("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Weekly confirmed cases per 100,000 (rounded)</p>"),
   reactableOutput("table", height = "100%")
 )
 
@@ -84,7 +84,7 @@ output$table <- renderReactable({
             onClick = "select", 
             highlight = TRUE, 
             paginationType = "simple",
-            height = "auto",
+            height = "100%",
             compact = TRUE,
             borderless = FALSE,
             wrap = FALSE,
@@ -150,11 +150,11 @@ output$chart <- renderPlot({
       mutate(ma_cases = rollmean(new_cases, 7, align = "center", fill = NA))
   
   ggplot() +
-    geom_hline(yintercept = 0, size = 0.3, colour = "#333333") +
+    geom_hline(yintercept = 0, linewidth = 0.3, colour = "#333333") +
     geom_col(data = selected_cases, aes(x = date, y = new_cases), fill = "#39809E", colour = NA, width = 0.8, alpha = 0.6) +
-    geom_line(data = selected_cases, aes(x = date, y = ma_cases, colour = "ma_cases"), size = 1, alpha = 1) +
+    geom_line(data = selected_cases, aes(x = date, y = ma_cases, colour = "ma_cases"), linewidth = 1, alpha = 1) +
     scale_colour_manual(values = c("ma_cases" = "#39809E"), name = NULL, labels = "7-day average") +
-    scale_x_date(breaks = c(min(selected_cases$date), max(selected_cases$date)), date_labels = "%d-%b") +
+    scale_x_date(breaks = c(min(selected_cases$date), max(selected_cases$date)), date_labels = "%d %b '%y") +
     scale_y_continuous(expand = c(0.005, 0.005), breaks = function(x) unique(
         floor(pretty(seq(0, (max(x) + 1) * 1.1)))), position = "right") +
     labs(x = NULL, y = NULL, title = NULL, NULL,
@@ -166,7 +166,7 @@ output$chart <- renderPlot({
           legend.position = "top",
           legend.justification = "left",
           legend.text = element_text(size = 12),
-          axis.ticks.x = element_line(colour = 'black', size = 0.5))
+          axis.ticks.x = element_line(colour = 'black', linewidth = 0.5))
   
 }, execOnResize = TRUE) 
 ```
@@ -193,13 +193,13 @@ output$mapUI <- renderUI({
 
 zoom_to <- reactive({
   id <- tbl[selected(), ]$area_name
-  filter(sf, lad19nm == id) 
+  filter(sf, lad22nm == id) 
   })
 
 output$map <- renderLeaflet({
   
     leaflet(data = zoom_to()) %>%
-    addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2020)</a>') %>%
+    addTiles(urlTemplate = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.ons.gov.uk/methodology/geography/licences">Contains OS data © Crown copyright and database right (2021)</a>') %>%
     addPolygons(fillColor = "transparent", weight = 1, color = "#757575", opacity = 1) %>% 
     addCircleMarkers(lng = ~lon, lat = ~lat, radius = ~sqrt(n), fillColor = "#39809E", fillOpacity = 0.7, weight = 1, color = "#FFFFFF", opacity = 1) %>%
     addPolygons(fillColor = "transparent", stroke = TRUE, weight = 1, color = "transparent", opacity = 1, label = ~popup, labelOptions = labelOptions(style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "bottom", offset = c(0, 25)), highlight = highlightOptions(fillColor = "#39809E", fillOpacity = 0.2, stroke = TRUE, color = "#39809E", weight = 1, bringToFront = TRUE)) %>%
