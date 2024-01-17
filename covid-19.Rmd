@@ -73,7 +73,12 @@ Column {data-width=500}
 ###
 ```{r}
 fillCol(flex = c(NA, 1),
-  HTML("<p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Weekly confirmed cases per 100,000 (rounded)</p>"),
+  HTML("
+       <p style = 'color: #707070;font-size: 1.1em;font-weight: bold;margin-left: 15px;'>Weekly confirmed cases per 100,000 (rounded)</p>
+       <p class='contentBlock themeBlockLight smallText' style='margin-bottom: 1em;'>
+            <span style='font-weight: bold;'>PLEASE NOTE:</span> The final data update of the <a href='https://coronavirus.data.gov.uk/details/whats-new/record/3542bdd2-99a1-44dc-8dab-4e787b777085' target='_blank'>Coronavirus (COVID-19) dashboard</a> supplying data to this app occurred on 14 December 2023. The dashboard has now been replaced by the <a href='https://ukhsa-dashboard.data.gov.uk/' target='_blank'>UKHSA data dashboard</a> which presents the latest available data on respiratory viruses including COVID-19.
+          </p>
+       "),
   reactableOutput("table", height = "100%")
 )
 
@@ -370,6 +375,24 @@ div.about {
 /* Change map pointer to grab */
 .leaflet-interactive {
     cursor: grab;
+}
+
+/* content block usually paired with themeBlockLight */
+.contentBlock
+{
+    padding: 1em;
+    border-left: 4px solid #757575;
+}
+
+.themeBlockLight
+{
+    background-color: #f5f9ff;
+}
+
+/* Used for reference text or clarification notes mostly */
+.smallText
+{
+    font-size: 0.8em;
 }
   `;
 </script>
